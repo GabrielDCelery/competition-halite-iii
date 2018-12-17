@@ -154,9 +154,13 @@ class CollectionRateAtCellTableGenerator {
     }
 
     _getMaxRecommendedTurns (_columnLabel, _threshold) {
-        const _numOfTurns = this.table.length;
+        const _numOfTurns = this.table.getTable().length;
 
         for (let _i = 0, _iMax = _numOfTurns; _i < _iMax; _i++) {
+            if (_i + 1 === _iMax) {
+                continue;
+            }
+
             const _cellValue = this.table.getCellValue(_i, _columnLabel);
             const _nextCellValue = this.table.getCellValue(_i + 1, _columnLabel);
 
@@ -169,12 +173,12 @@ class CollectionRateAtCellTableGenerator {
     }
 
     _getMinRequiredTurns (_columnLabel, _threshold) {
-        const _numOfTurns = this.table.length;
+        const _numOfTurns = this.table.getTable().length;
 
         for (let _i = 0, _iMax = _numOfTurns; _i < _iMax; _i++) {
             const _cellValue = this.table.getCellValue(_i, _columnLabel);
 
-            if (_cellValue < _threshold) {
+            if (_cellValue <= _threshold) {
                 return _i;
             }
         }
@@ -195,9 +199,27 @@ class CollectionRateAtCellTableGenerator {
     calculateSuggestedNumberOfTurns (_amountInCargoAtTurnStart, _amountOnCellAtTurnStart) {
         this.generateTurnByTurnAnalysis(_amountInCargoAtTurnStart, _amountOnCellAtTurnStart);
 
+        console.log(this.table.getTable())
+
         const _thresholdSuggestions = _.cloneDeep(this.thresholdSuggestions);
 
-        const _minValues = _thresholdSuggestions.min
+        const _minValues = _thresholdSuggestions.min.map(_minConfig => {
+            return this._getMinRequiredTurns(_minConfig.label, _minConfig.threshold);
+        });
+
+        const _maxValues = _thresholdSuggestions.max.map(_maxConfig => {
+            return this._getMaxRecommendedTurns(_maxConfig.label, _maxConfig.threshold);
+        });
+
+        const _minTurns = Math.max(..._minValues);
+        const _maxTurns = Math.min(..._maxValues);
+        const _recommendedTurns = _minTurns <= _maxTurns ? _maxTurns : _minTurns;
+
+        return {
+            recommended: _maxTurns !== 0 && _minTurns <= _maxTurns,
+            recommededTurns: _recommendedTurns,
+            cargoTotalFillRateAfterLeave: this.table.getCellValue(_recommendedTurns, 'cargoTotalFillRateAfterLeave')
+        }
     }
 }
 

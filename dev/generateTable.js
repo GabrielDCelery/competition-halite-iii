@@ -4,8 +4,6 @@ const CollectionRateAtCellAnalyzer = require('../analysis/CollectionRateAtCellAn
 
 const collectionRateAtCellAnalyzer = new CollectionRateAtCellAnalyzer();
 
-const _result = collectionRateAtCellAnalyzer.generateTurnByTurnAnalysis(400, 100);
+const _result = collectionRateAtCellAnalyzer.setThresholdSuggestions(20, 5, 3).calculateSuggestedNumberOfTurns(600, 300);
 
-//console.log(_result);
-
-collectionRateAtCellAnalyzer.setThresholdSuggestions(10, 5, 5);
+console.log(_result);
