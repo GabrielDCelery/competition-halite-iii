@@ -1,7 +1,11 @@
 'usse strict';
 
-const ShipAtCellCollectionTableGenerator = require('../analysis/ShipAtCellCollectionTableGenerator');
+const CollectionRateAtCellAnalyzer = require('../analysis/CollectionRateAtCellAnalyzer');
 
-const shipAtCellCollectionTableGenerator = new ShipAtCellCollectionTableGenerator();
+const collectionRateAtCellAnalyzer = new CollectionRateAtCellAnalyzer();
 
-shipAtCellCollectionTableGenerator.generateTable(0, 800);
+const _result = collectionRateAtCellAnalyzer.generateTurnByTurnAnalysis(400, 100);
+
+//console.log(_result);
+
+collectionRateAtCellAnalyzer.setThresholdSuggestions(10, 5, 5);

@@ -1,5 +1,7 @@
 'use strict';
 
+const _ = require('lodash');
+
 const CARGO_MAXIMUM_AMOUNT = 1000;
 
 const NUM_OF_TURNS_TO_CALCULATE = 30;
@@ -16,15 +18,35 @@ const COLUMN_LABELS = [
     'amountInCargoAfterLeave',
     'canLeave',
     'cargoAmountWasted',
-    'cargoTotalFillAfterLeave',
+    'cargoTotalFillRateAfterLeave',
     'cargoIncreaseRate'
 ];
 
 const Table = require('../utils/Table');
 
-class ShipAtCellCollectionTableGenerator {
+class CollectionRateAtCellTableGenerator {
     constructor () {
         this.table = new Table(NUM_OF_TURNS_TO_CALCULATE, COLUMN_LABELS.length).setColumnLookup(COLUMN_LABELS);
+        this._getMaxRecommendedTurns = this._getMaxRecommendedTurns.bind(this);
+        this._getMinRequiredTurns = this._getMinRequiredTurns.bind(this);
+    }
+
+    setThresholdSuggestions (_maxLeaveCost, _maxCargoAmountWasted, _minCargoIncreaseRate) {
+        this.thresholdSuggestions = {
+            min: [{
+                label: 'leaveCost',
+                threshold: _maxLeaveCost
+            }, {
+                label: 'cargoAmountWasted',
+                threshold: _maxCargoAmountWasted
+            }],
+            max: [{
+                label: 'cargoIncreaseRate',
+                threshold: _minCargoIncreaseRate
+            }]
+        };
+
+        return this;
     }
 
     _calculateMaximumCollectableAmount (_amountOnCell) {
@@ -69,7 +91,7 @@ class ShipAtCellCollectionTableGenerator {
         return parseFloat((_leaveCost / _amountInCargoAtTurnEnd * 100).toFixed(1));
     }
 
-    _cargoTotalFillAfterLeave (_amountInCargoAfterLeave) {
+    _cargoTotalFillRateAfterLeave (_amountInCargoAfterLeave) {
         return parseFloat((_amountInCargoAfterLeave / CARGO_MAXIMUM_AMOUNT * 100).toFixed(1));
     }
 
@@ -102,7 +124,7 @@ class ShipAtCellCollectionTableGenerator {
         this.table.setCellValue(_turnNum, 'amountInCargoAfterLeave', _amountInCargoAfterLeave);
         this.table.setCellValue(_turnNum, 'canLeave', this._bCanLeave(_amountInCargoAtTurnStart, _amountOnCellAtTurnStart));
         this.table.setCellValue(_turnNum, 'cargoAmountWasted', this._cargoAmountWasted(_leaveCost, _amountInCargoAtTurnEnd));
-        this.table.setCellValue(_turnNum, 'cargoTotalFillAfterLeave', this._cargoTotalFillAfterLeave (_amountInCargoAfterLeave));
+        this.table.setCellValue(_turnNum, 'cargoTotalFillRateAfterLeave', this._cargoTotalFillRateAfterLeave (_amountInCargoAfterLeave));
         this.table.setCellValue(_turnNum, 'cargoIncreaseRate', this._cargoIncreaseRate(_amountInCargoAfterLeave, _amountInCargoAtTurnStart));
     }
 
@@ -127,19 +149,56 @@ class ShipAtCellCollectionTableGenerator {
         this.table.setCellValue(0, 'amountInCargoAfterLeave', _amountInCargoAfterLeave);
         this.table.setCellValue(0, 'canLeave', this._bCanLeave(_amountInCargoAtTurnStart, _amountOnCellAtTurnStart));
         this.table.setCellValue(0, 'cargoAmountWasted', this._cargoAmountWasted(_leaveCost, _amountInCargoAtTurnEnd));
-        this.table.setCellValue(0, 'cargoTotalFillAfterLeave', this._cargoTotalFillAfterLeave (_amountInCargoAtTurnEnd));
+        this.table.setCellValue(0, 'cargoTotalFillRateAfterLeave', this._cargoTotalFillRateAfterLeave (_amountInCargoAtTurnEnd));
         this.table.setCellValue(0, 'cargoIncreaseRate', this._cargoIncreaseRate(_amountInCargoAfterLeave, _amountInCargoAtTurnStart));
     }
 
-    generateTable (_amountInCargoAtTurnStart, _amountOnCellAtTurnStart) {
+    _getMaxRecommendedTurns (_columnLabel, _threshold) {
+        const _numOfTurns = this.table.length;
+
+        for (let _i = 0, _iMax = _numOfTurns; _i < _iMax; _i++) {
+            const _cellValue = this.table.getCellValue(_i, _columnLabel);
+            const _nextCellValue = this.table.getCellValue(_i + 1, _columnLabel);
+
+            if (_threshold <= _cellValue && _threshold > _nextCellValue) {
+                return _i;
+            }
+        }
+
+        return 0;
+    }
+
+    _getMinRequiredTurns (_columnLabel, _threshold) {
+        const _numOfTurns = this.table.length;
+
+        for (let _i = 0, _iMax = _numOfTurns; _i < _iMax; _i++) {
+            const _cellValue = this.table.getCellValue(_i, _columnLabel);
+
+            if (_cellValue < _threshold) {
+                return _i;
+            }
+        }
+
+        return _numOfTurns;
+    }
+
+    generateTurnByTurnAnalysis (_amountInCargoAtTurnStart, _amountOnCellAtTurnStart) {
         this._generateFirstRow(_amountInCargoAtTurnStart, _amountOnCellAtTurnStart);
 
         for (let _i = 1, _iMax = NUM_OF_TURNS_TO_CALCULATE; _i < _iMax; _i++) {
             this._generateRow(_i);
         }
 
-        console.log(this.table.getTable());
+        return this.table.getTable();
+    }
+
+    calculateSuggestedNumberOfTurns (_amountInCargoAtTurnStart, _amountOnCellAtTurnStart) {
+        this.generateTurnByTurnAnalysis(_amountInCargoAtTurnStart, _amountOnCellAtTurnStart);
+
+        const _thresholdSuggestions = _.cloneDeep(this.thresholdSuggestions);
+
+        const _minValues = _thresholdSuggestions.min
     }
 }
 
-module.exports = ShipAtCellCollectionTableGenerator;
+module.exports = CollectionRateAtCellTableGenerator;
