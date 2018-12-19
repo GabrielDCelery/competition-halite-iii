@@ -88,7 +88,7 @@ class CollectionRateAtCellTableGenerator {
     }
 
     _cargoAmountWasted (_leaveCost, _amountInCargoAtTurnEnd) {
-        return parseFloat((_leaveCost / _amountInCargoAtTurnEnd * 100).toFixed(1));
+        return _amountInCargoAtTurnEnd === 0 ? 0 : parseFloat((_leaveCost / _amountInCargoAtTurnEnd * 100).toFixed(1));
     }
 
     _cargoTotalFillRateAfterLeave (_amountInCargoAfterLeave) {
@@ -96,7 +96,7 @@ class CollectionRateAtCellTableGenerator {
     }
 
     _cargoIncreaseRate (_amountInCargoAfterLeave, _amountInCargoAtTurnStart) {
-        return parseFloat(((_amountInCargoAfterLeave - _amountInCargoAtTurnStart) / _amountInCargoAtTurnStart * 100).toFixed(1));
+        return _amountInCargoAtTurnStart === 0 ? 0 : parseFloat(((_amountInCargoAfterLeave - _amountInCargoAtTurnStart) / _amountInCargoAtTurnStart * 100).toFixed(1));
     }
 
     _generateRow (_turnNum) {
@@ -173,9 +173,9 @@ class CollectionRateAtCellTableGenerator {
     }
 
     _getMinRequiredTurns (_columnLabel, _threshold) {
-        const _numOfTurns = this.table.getTable().length;
+        const _numOfTurns = this.table.getTable().length - 1;
 
-        for (let _i = 0, _iMax = _numOfTurns; _i < _iMax; _i++) {
+        for (let _i = 0, _iMax = _numOfTurns; _i <= _iMax; _i++) {
             const _cellValue = this.table.getCellValue(_i, _columnLabel);
 
             if (_cellValue <= _threshold) {
@@ -199,8 +199,6 @@ class CollectionRateAtCellTableGenerator {
     calculateSuggestedNumberOfTurns (_amountInCargoAtTurnStart, _amountOnCellAtTurnStart) {
         this.generateTurnByTurnAnalysis(_amountInCargoAtTurnStart, _amountOnCellAtTurnStart);
 
-        console.log(this.table.getTable())
-
         const _thresholdSuggestions = _.cloneDeep(this.thresholdSuggestions);
 
         const _minValues = _thresholdSuggestions.min.map(_minConfig => {
@@ -218,6 +216,7 @@ class CollectionRateAtCellTableGenerator {
         return {
             recommended: _maxTurns !== 0 && _minTurns <= _maxTurns,
             recommededTurns: _recommendedTurns,
+            cargoTotalFillRateAtTurnStart: parseFloat((_amountInCargoAtTurnStart / 1000 * 100).toFixed(1)),
             cargoTotalFillRateAfterLeave: this.table.getCellValue(_recommendedTurns, 'cargoTotalFillRateAfterLeave')
         }
     }
