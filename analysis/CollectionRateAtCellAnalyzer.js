@@ -216,8 +216,8 @@ class CollectionRateAtCellTableGenerator {
         return {
             recommended: _maxTurns !== 0 && _minTurns <= _maxTurns,
             recommededTurns: _recommendedTurns,
-            cargoTotalFillRateAtTurnStart: parseFloat((_amountInCargoAtTurnStart / 1000 * 100).toFixed(1)),
-            cargoTotalFillRateAfterLeave: this.table.getCellValue(_recommendedTurns, 'cargoTotalFillRateAfterLeave')
+            amountInCargoAtTurnStart: _amountInCargoAtTurnStart,
+            amountInCargoAfterLeave: this.table.getCellValue(_recommendedTurns, 'amountInCargoAfterLeave')
         }
     }
 }
