@@ -18,7 +18,15 @@ const createRecommendorTable = function createRecommendorTable (_maxLeaveCost, _
         });
     });
 
-    return table.getTable();
+    return table;
 }
 
-console.log(createRecommendorTable(10, 3, 5));
+const getRecommendation = function getRecommendation (_recommendorTable, _amountInCargo, _amountOnCell) {
+    return _recommendorTable.getCellValueByIndex(Math.round(_amountInCargo / 10), Math.round(_amountOnCell / 10));
+}
+
+//console.log(createRecommendorTable(10, 3, 5));
+
+const _result = getRecommendation(createRecommendorTable(20, 5, 3), 0, 100);
+
+console.log(_result);
