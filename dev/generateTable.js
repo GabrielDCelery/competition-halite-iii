@@ -1,17 +1,22 @@
 'usse strict';
 
 const _= require('lodash');
-const Table = require('../utils/Table');
+const TableWrapper = require('../utils/TableWrapper');
 const CollectionRateAtCellAnalyzer = require('../analysis/CollectionRateAtCellAnalyzer');
 
-const createRecommendorTable = function createRecommendorTable (_maxLeaveCost, _maxCargoAmountWasted, _minCargoIncreaseRate) {
-    const table = new Table(50, 50);
-    const collectionRateAtCellAnalyzer = new CollectionRateAtCellAnalyzer().setThresholdSuggestions(_maxLeaveCost, _maxCargoAmountWasted, _minCargoIncreaseRate);
+const turnByTurnAnalysis = require('../analysis/json/turnByTurnAnalysis.json');
+
+const createRecommendorTable = function createRecommendorTable (_thresholdSuggestions) {
+    const table = new TableWrapper(TableWrapper.generateEmptyTable(50, 50));
+    const collectionRateAtCellAnalyzer = new CollectionRateAtCellAnalyzer(30).setThresholdSuggestions(_thresholdSuggestions);
 
     _.times(50, _i => {
         _.times(50, _j => {
             const _amountInCargo = _i * 20;
             const _amountOnCell = _j * 20;
+
+            const turnByTurnAnalysisTableWrapper = new TableWrapper(turnByTurnAnalysis);
+
             const _result = collectionRateAtCellAnalyzer.calculateSuggestedNumberOfTurns(_amountInCargo, _amountOnCell);
     
             return table.setCellValue(_i, _j, _result);
@@ -24,12 +29,6 @@ const createRecommendorTable = function createRecommendorTable (_maxLeaveCost, _
 const getRecommendation = function getRecommendation (_recommendorTable, _amountInCargo, _amountOnCell) {
     return _recommendorTable.getCellValueByIndex(Math.round(_amountInCargo / 20), Math.round(_amountOnCell / 20));
 }
-
-//console.log(createRecommendorTable(10, 3, 5));
-
-//const _result = getRecommendation(createRecommendorTable(20, 5, 3), 0, 100);
-
-//console.log(_result);
 
 const harvestCell = function harvestCell (_turns, _amountInCargo, _amountOnCell) {
     let _currentAmountInCargo = _amountInCargo;
@@ -73,13 +72,6 @@ const runHarvest = function runHarves (_cells, _recommendorTable) {
 
     return _result;
 }
-/*
-const _recommendorTable = createRecommendorTable(1, 3, 3);
-
-const _result = runHarvest([100, 200, 400, 800], _recommendorTable);
-
-console.log(_result)
-*/
 
 let _finalHarvest = { 
     totalHarvestedAmount: 0,
@@ -89,16 +81,28 @@ let _finalHarvest = {
 
 let _configuration = null;
 
-_.times(80, _leaveCost => {
-    _.times(10, _wasteRate => {
+_.times(80, _maxLeaveCost => {
+    _.times(10, _maxWasteRate => {
         _.times(10, _minCargoIncreaseRate => {
-            const _recommendorTable = createRecommendorTable(_leaveCost, _wasteRate, _minCargoIncreaseRate);
+            const _recommendorTable = createRecommendorTable({
+                min: [{
+                    label: 'leaveCost',
+                    threshold: _maxLeaveCost
+                }, {
+                    label: 'cargoAmountWasted',
+                    threshold: _maxWasteRate
+                }],
+                max: [{
+                    label: 'cargoIncreaseRate',
+                    threshold: _minCargoIncreaseRate
+                }]
+            });
 
             const _result = runHarvest([100, 200, 400, 800], _recommendorTable);
 
             if (_result.halitePerTurn > _finalHarvest.halitePerTurn) {
                 _finalHarvest = _result;
-                _configuration = [_leaveCost, _wasteRate, _minCargoIncreaseRate];
+                _configuration = [_maxLeaveCost, _maxWasteRate, _minCargoIncreaseRate];
 
                 console.log(_finalHarvest)
                 console.log(_configuration)

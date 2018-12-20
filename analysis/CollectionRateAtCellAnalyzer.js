@@ -1,52 +1,49 @@
 'use strict';
 
 const _ = require('lodash');
+const TableWrapper = require('../utils/TableWrapper');
 
 const CARGO_MAXIMUM_AMOUNT = 1000;
 
-const NUM_OF_TURNS_TO_CALCULATE = 30;
-const COLUMN_LABELS = [
-    'amountInCargoAtTurnStart',
-    'amountOnCellAtTurnStart',
-    'maximumCollectableAmount',
-    'collectedAmount',
-    'couldCollectMaximumAmount',
-    'totalCollectedAmount',
-    'amountInCargoAtTurnEnd',
-    'amountOnCellAtTurnEnd',
-    'leaveCost',
-    'amountInCargoAfterLeave',
-    'canLeave',
-    'cargoAmountWasted',
-    'cargoTotalFillRateAfterLeave',
-    'cargoIncreaseRate'
-];
-
-const Table = require('../utils/Table');
-
-class CollectionRateAtCellTableGenerator {
-    constructor () {
-        this.table = new Table(NUM_OF_TURNS_TO_CALCULATE, COLUMN_LABELS.length).setColumnLookup(COLUMN_LABELS);
-        this._getMaxRecommendedTurns = this._getMaxRecommendedTurns.bind(this);
-        this._getMinRequiredTurns = this._getMinRequiredTurns.bind(this);
+class CollectionRateAtCellAnalyzer {
+    static get COLUMN_LABELS() {
+        return {
+            AMOUNT_IN_CARGO_AT_TURN_START: 'AMOUNT_IN_CARGO_AT_TURN_START',
+            AMOUNT_ON_CELL_AT_TURN_START: 'AMOUNT_ON_CELL_AT_TURN_START',
+            MAXIMUM_COLLECTABLE_AMOUNT: 'MAXIMUM_COLLECTABLE_AMOUNT',
+            COLLECTED_AMOUNT: 'COLLECTED_AMOUNT',
+            COULD_COLLECT_MAXIMUM_AMOUNT: 'COULD_COLLECT_MAXIMUM_AMOUNT',
+            TOTAL_COLLECTED_AMOUNT: 'TOTAL_COLLECTED_AMOUNT',
+            AMOUNT_IN_CARGO_AT_TURN_END: 'AMOUNT_IN_CARGO_AT_TURN_END',
+            AMOUNT_ON_CELL_AT_TURN_END: 'AMOUNT_ON_CELL_AT_TURN_END',
+            LEAVE_COST: 'LEAVE_COST',
+            AMOUNT_IN_CARGO_AFTER_LEAVE: 'AMOUNT_IN_CARGO_AFTER_LEAVE',
+            CAN_LEAVE: 'CAN_LEAVE',
+            CARGO_AMOUNT_WASTED: 'CARGO_AMOUNT_WASTED',
+            CARGO_TOTAL_FILL_RATE_AFTER_LEAVE: 'CARGO_TOTAL_FILL_RATE_AFTER_LEAVE',
+            CARGO_INCREASE_RATE: 'CARGO_INCREASE_RATE'
+        }
     }
 
-    setThresholdSuggestions (_maxLeaveCost, _maxCargoAmountWasted, _minCargoIncreaseRate) {
-        this.thresholdSuggestions = {
-            min: [{
-                label: 'leaveCost',
-                threshold: _maxLeaveCost
-            }, {
-                label: 'cargoAmountWasted',
-                threshold: _maxCargoAmountWasted
-            }],
-            max: [{
-                label: 'cargoIncreaseRate',
-                threshold: _minCargoIncreaseRate
-            }]
-        };
-
-        return this;
+    constructor (_numOfTurnsToAnalyze) {
+        this._numOfTurnsToAnalyze = _numOfTurnsToAnalyze;
+        this._tableWrapper = new TableWrapper(
+                TableWrapper.generateEmptyTable(this._numOfTurnsToAnalyze + 1, _.size(CollectionRateAtCellAnalyzer.COLUMN_LABELS))
+            )
+            .setColumnLabel(CollectionRateAtCellAnalyzer.COLUMN_LABELS.AMOUNT_IN_CARGO_AT_TURN_START, 0)
+            .setColumnLabel(CollectionRateAtCellAnalyzer.COLUMN_LABELS.AMOUNT_ON_CELL_AT_TURN_START, 1)
+            .setColumnLabel(CollectionRateAtCellAnalyzer.COLUMN_LABELS.MAXIMUM_COLLECTABLE_AMOUNT, 2)
+            .setColumnLabel(CollectionRateAtCellAnalyzer.COLUMN_LABELS.COLLECTED_AMOUNT, 3)
+            .setColumnLabel(CollectionRateAtCellAnalyzer.COLUMN_LABELS.COULD_COLLECT_MAXIMUM_AMOUNT, 4)
+            .setColumnLabel(CollectionRateAtCellAnalyzer.COLUMN_LABELS.TOTAL_COLLECTED_AMOUNT, 5)
+            .setColumnLabel(CollectionRateAtCellAnalyzer.COLUMN_LABELS.AMOUNT_IN_CARGO_AT_TURN_END, 6)
+            .setColumnLabel(CollectionRateAtCellAnalyzer.COLUMN_LABELS.AMOUNT_ON_CELL_AT_TURN_END, 7)
+            .setColumnLabel(CollectionRateAtCellAnalyzer.COLUMN_LABELS.LEAVE_COST, 8)
+            .setColumnLabel(CollectionRateAtCellAnalyzer.COLUMN_LABELS.AMOUNT_IN_CARGO_AFTER_LEAVE, 9)
+            .setColumnLabel(CollectionRateAtCellAnalyzer.COLUMN_LABELS.CAN_LEAVE, 10)
+            .setColumnLabel(CollectionRateAtCellAnalyzer.COLUMN_LABELS.CARGO_AMOUNT_WASTED, 11)
+            .setColumnLabel(CollectionRateAtCellAnalyzer.COLUMN_LABELS.CARGO_TOTAL_FILL_RATE_AFTER_LEAVE, 12)
+            .setColumnLabel(CollectionRateAtCellAnalyzer.COLUMN_LABELS.CARGO_INCREASE_RATE, 13);
     }
 
     _calculateMaximumCollectableAmount (_amountOnCell) {
@@ -101,31 +98,31 @@ class CollectionRateAtCellTableGenerator {
 
     _generateRow (_turnNum) {
         const _previousTurnNum = _turnNum - 1;
-        const _amountInCargoAtTurnStart = this.table.getCellValue(_previousTurnNum, 'amountInCargoAtTurnEnd');
-        const _amountOnCellAtTurnStart = this.table.getCellValue(_previousTurnNum, 'amountOnCellAtTurnStart') - this.table.getCellValue(_previousTurnNum, 'collectedAmount');
+        const _amountInCargoAtTurnStart = this._tableWrapper.getCellValue(_previousTurnNum, CollectionRateAtCellAnalyzer.COLUMN_LABELS.AMOUNT_IN_CARGO_AT_TURN_END);
+        const _amountOnCellAtTurnStart = this._tableWrapper.getCellValue(_previousTurnNum, CollectionRateAtCellAnalyzer.COLUMN_LABELS.AMOUNT_ON_CELL_AT_TURN_START) - this._tableWrapper.getCellValue(_previousTurnNum, CollectionRateAtCellAnalyzer.COLUMN_LABELS.COLLECTED_AMOUNT);
         const _maximumCollectableAmount = this._calculateMaximumCollectableAmount(_amountOnCellAtTurnStart);
         const _collectedAmount = this._calculateCollectedAmount(_amountOnCellAtTurnStart, _amountInCargoAtTurnStart);
         const _bCouldCollectMaximumAmount = this._calculateCouldCollectMaximumAmount (_amountOnCellAtTurnStart, _amountInCargoAtTurnStart);
-        const _totalCollectedAmount = this.table.getCellValue(_previousTurnNum, 'totalCollectedAmount') + _collectedAmount;
+        const _totalCollectedAmount = this._tableWrapper.getCellValue(_previousTurnNum, CollectionRateAtCellAnalyzer.COLUMN_LABELS.TOTAL_COLLECTED_AMOUNT) + _collectedAmount;
         const _amountInCargoAtTurnEnd = this._amountInCargoAtTurnEnd (_amountInCargoAtTurnStart, _collectedAmount);
         const _amountOnCellAtTurnEnd = this._amountOnCellAtTurnEnd (_amountOnCellAtTurnStart, _collectedAmount);
         const _leaveCost = this._calculateLeaveCost(_amountOnCellAtTurnEnd);
         const _amountInCargoAfterLeave = this._amountInCargoAfterLeave (_amountInCargoAtTurnEnd,  _leaveCost);
 
-        this.table.setCellValue(_turnNum, 'amountInCargoAtTurnStart', _amountInCargoAtTurnStart);
-        this.table.setCellValue(_turnNum, 'amountOnCellAtTurnStart', _amountOnCellAtTurnStart);
-        this.table.setCellValue(_turnNum, 'maximumCollectableAmount', _maximumCollectableAmount);
-        this.table.setCellValue(_turnNum, 'collectedAmount', _collectedAmount);
-        this.table.setCellValue(_turnNum, 'couldCollectMaximumAmount', _bCouldCollectMaximumAmount);
-        this.table.setCellValue(_turnNum, 'totalCollectedAmount', _totalCollectedAmount);
-        this.table.setCellValue(_turnNum, 'amountInCargoAtTurnEnd', _amountInCargoAtTurnEnd);
-        this.table.setCellValue(_turnNum, 'amountOnCellAtTurnEnd', _amountOnCellAtTurnEnd);
-        this.table.setCellValue(_turnNum, 'leaveCost', _leaveCost);
-        this.table.setCellValue(_turnNum, 'amountInCargoAfterLeave', _amountInCargoAfterLeave);
-        this.table.setCellValue(_turnNum, 'canLeave', this._bCanLeave(_amountInCargoAtTurnStart, _amountOnCellAtTurnStart));
-        this.table.setCellValue(_turnNum, 'cargoAmountWasted', this._cargoAmountWasted(_leaveCost, _amountInCargoAtTurnEnd));
-        this.table.setCellValue(_turnNum, 'cargoTotalFillRateAfterLeave', this._cargoTotalFillRateAfterLeave (_amountInCargoAfterLeave));
-        this.table.setCellValue(_turnNum, 'cargoIncreaseRate', this._cargoIncreaseRate(_amountInCargoAfterLeave, _amountInCargoAtTurnStart));
+        this._tableWrapper.setCellValue(_turnNum, CollectionRateAtCellAnalyzer.COLUMN_LABELS.AMOUNT_IN_CARGO_AT_TURN_START, _amountInCargoAtTurnStart);
+        this._tableWrapper.setCellValue(_turnNum, CollectionRateAtCellAnalyzer.COLUMN_LABELS.AMOUNT_ON_CELL_AT_TURN_START, _amountOnCellAtTurnStart);
+        this._tableWrapper.setCellValue(_turnNum, CollectionRateAtCellAnalyzer.COLUMN_LABELS.MAXIMUM_COLLECTABLE_AMOUNT, _maximumCollectableAmount);
+        this._tableWrapper.setCellValue(_turnNum, CollectionRateAtCellAnalyzer.COLUMN_LABELS.COLLECTED_AMOUNT, _collectedAmount);
+        this._tableWrapper.setCellValue(_turnNum, CollectionRateAtCellAnalyzer.COLUMN_LABELS.COULD_COLLECT_MAXIMUM_AMOUNT, _bCouldCollectMaximumAmount);
+        this._tableWrapper.setCellValue(_turnNum, CollectionRateAtCellAnalyzer.COLUMN_LABELS.TOTAL_COLLECTED_AMOUNT, _totalCollectedAmount);
+        this._tableWrapper.setCellValue(_turnNum, CollectionRateAtCellAnalyzer.COLUMN_LABELS.AMOUNT_IN_CARGO_AT_TURN_END, _amountInCargoAtTurnEnd);
+        this._tableWrapper.setCellValue(_turnNum, CollectionRateAtCellAnalyzer.COLUMN_LABELS.AMOUNT_ON_CELL_AT_TURN_END, _amountOnCellAtTurnEnd);
+        this._tableWrapper.setCellValue(_turnNum, CollectionRateAtCellAnalyzer.COLUMN_LABELS.LEAVE_COST, _leaveCost);
+        this._tableWrapper.setCellValue(_turnNum, CollectionRateAtCellAnalyzer.COLUMN_LABELS.AMOUNT_IN_CARGO_AFTER_LEAVE, _amountInCargoAfterLeave);
+        this._tableWrapper.setCellValue(_turnNum, CollectionRateAtCellAnalyzer.COLUMN_LABELS.CAN_LEAVE, this._bCanLeave(_amountInCargoAtTurnStart, _amountOnCellAtTurnStart));
+        this._tableWrapper.setCellValue(_turnNum, CollectionRateAtCellAnalyzer.COLUMN_LABELS.CARGO_AMOUNT_WASTED, this._cargoAmountWasted(_leaveCost, _amountInCargoAtTurnEnd));
+        this._tableWrapper.setCellValue(_turnNum, CollectionRateAtCellAnalyzer.COLUMN_LABELS.CARGO_TOTAL_FILL_RATE_AFTER_LEAVE, this._cargoTotalFillRateAfterLeave (_amountInCargoAfterLeave));
+        this._tableWrapper.setCellValue(_turnNum, CollectionRateAtCellAnalyzer.COLUMN_LABELS.CARGO_INCREASE_RATE, this._cargoIncreaseRate(_amountInCargoAfterLeave, _amountInCargoAtTurnStart));
     }
 
     _generateFirstRow (_amountInCargoAtTurnStart, _amountOnCellAtTurnStart) {
@@ -137,89 +134,31 @@ class CollectionRateAtCellTableGenerator {
         const _leaveCost = this._calculateLeaveCost(_amountOnCellAtTurnEnd);
         const _amountInCargoAfterLeave = this._amountInCargoAfterLeave (_amountInCargoAtTurnEnd,  _leaveCost);
 
-        this.table.setCellValue(0, 'amountInCargoAtTurnStart', _amountInCargoAtTurnStart);
-        this.table.setCellValue(0, 'amountOnCellAtTurnStart', _amountOnCellAtTurnStart);
-        this.table.setCellValue(0, 'maximumCollectableAmount', _maximumCollectableAmount);
-        this.table.setCellValue(0, 'collectedAmount', 0);
-        this.table.setCellValue(0, 'couldCollectMaximumAmount', true);
-        this.table.setCellValue(0, 'totalCollectedAmount', _totalCollectedAmount);
-        this.table.setCellValue(0, 'amountInCargoAtTurnEnd', _amountInCargoAtTurnEnd);
-        this.table.setCellValue(0, 'amountOnCellAtTurnEnd', _amountOnCellAtTurnEnd);
-        this.table.setCellValue(0, 'leaveCost', _leaveCost);
-        this.table.setCellValue(0, 'amountInCargoAfterLeave', _amountInCargoAfterLeave);
-        this.table.setCellValue(0, 'canLeave', this._bCanLeave(_amountInCargoAtTurnStart, _amountOnCellAtTurnStart));
-        this.table.setCellValue(0, 'cargoAmountWasted', this._cargoAmountWasted(_leaveCost, _amountInCargoAtTurnEnd));
-        this.table.setCellValue(0, 'cargoTotalFillRateAfterLeave', this._cargoTotalFillRateAfterLeave (_amountInCargoAtTurnEnd));
-        this.table.setCellValue(0, 'cargoIncreaseRate', this._cargoIncreaseRate(_amountInCargoAfterLeave, _amountInCargoAtTurnStart));
-    }
-
-    _getMaxRecommendedTurns (_columnLabel, _threshold) {
-        const _numOfTurns = this.table.getTable().length;
-
-        for (let _i = 0, _iMax = _numOfTurns; _i < _iMax; _i++) {
-            if (_i + 1 === _iMax) {
-                continue;
-            }
-
-            const _cellValue = this.table.getCellValue(_i, _columnLabel);
-            const _nextCellValue = this.table.getCellValue(_i + 1, _columnLabel);
-
-            if (_threshold <= _cellValue && _threshold > _nextCellValue) {
-                return _i;
-            }
-        }
-
-        return 0;
-    }
-
-    _getMinRequiredTurns (_columnLabel, _threshold) {
-        const _numOfTurns = this.table.getTable().length - 1;
-
-        for (let _i = 0, _iMax = _numOfTurns; _i <= _iMax; _i++) {
-            const _cellValue = this.table.getCellValue(_i, _columnLabel);
-
-            if (_cellValue <= _threshold) {
-                return _i;
-            }
-        }
-
-        return _numOfTurns;
+        this._tableWrapper.setCellValue(0, CollectionRateAtCellAnalyzer.COLUMN_LABELS.AMOUNT_IN_CARGO_AT_TURN_START, _amountInCargoAtTurnStart);
+        this._tableWrapper.setCellValue(0, CollectionRateAtCellAnalyzer.COLUMN_LABELS.AMOUNT_ON_CELL_AT_TURN_START, _amountOnCellAtTurnStart);
+        this._tableWrapper.setCellValue(0, CollectionRateAtCellAnalyzer.COLUMN_LABELS.MAXIMUM_COLLECTABLE_AMOUNT, _maximumCollectableAmount);
+        this._tableWrapper.setCellValue(0, CollectionRateAtCellAnalyzer.COLUMN_LABELS.COLLECTED_AMOUNT, 0);
+        this._tableWrapper.setCellValue(0, CollectionRateAtCellAnalyzer.COLUMN_LABELS.COULD_COLLECT_MAXIMUM_AMOUNT, true);
+        this._tableWrapper.setCellValue(0, CollectionRateAtCellAnalyzer.COLUMN_LABELS.TOTAL_COLLECTED_AMOUNT, _totalCollectedAmount);
+        this._tableWrapper.setCellValue(0, CollectionRateAtCellAnalyzer.COLUMN_LABELS.AMOUNT_IN_CARGO_AT_TURN_END, _amountInCargoAtTurnEnd);
+        this._tableWrapper.setCellValue(0, CollectionRateAtCellAnalyzer.COLUMN_LABELS.AMOUNT_ON_CELL_AT_TURN_END, _amountOnCellAtTurnEnd);
+        this._tableWrapper.setCellValue(0, CollectionRateAtCellAnalyzer.COLUMN_LABELS.LEAVE_COST, _leaveCost);
+        this._tableWrapper.setCellValue(0, CollectionRateAtCellAnalyzer.COLUMN_LABELS.AMOUNT_IN_CARGO_AFTER_LEAVE, _amountInCargoAfterLeave);
+        this._tableWrapper.setCellValue(0, CollectionRateAtCellAnalyzer.COLUMN_LABELS.CAN_LEAVE, this._bCanLeave(_amountInCargoAtTurnStart, _amountOnCellAtTurnStart));
+        this._tableWrapper.setCellValue(0, CollectionRateAtCellAnalyzer.COLUMN_LABELS.CARGO_AMOUNT_WASTED, this._cargoAmountWasted(_leaveCost, _amountInCargoAtTurnEnd));
+        this._tableWrapper.setCellValue(0, CollectionRateAtCellAnalyzer.COLUMN_LABELS.CARGO_TOTAL_FILL_RATE_AFTER_LEAVE, this._cargoTotalFillRateAfterLeave (_amountInCargoAtTurnEnd));
+        this._tableWrapper.setCellValue(0, CollectionRateAtCellAnalyzer.COLUMN_LABELS.CARGO_INCREASE_RATE, this._cargoIncreaseRate(_amountInCargoAfterLeave, _amountInCargoAtTurnStart));
     }
 
     generateTurnByTurnAnalysis (_amountInCargoAtTurnStart, _amountOnCellAtTurnStart) {
         this._generateFirstRow(_amountInCargoAtTurnStart, _amountOnCellAtTurnStart);
 
-        for (let _i = 1, _iMax = NUM_OF_TURNS_TO_CALCULATE; _i < _iMax; _i++) {
+        for (let _i = 1, _iMax = this._numOfTurnsToAnalyze + 1; _i < _iMax; _i++) {
             this._generateRow(_i);
         }
 
-        return this.table.getTable();
-    }
-
-    calculateSuggestedNumberOfTurns (_amountInCargoAtTurnStart, _amountOnCellAtTurnStart) {
-        this.generateTurnByTurnAnalysis(_amountInCargoAtTurnStart, _amountOnCellAtTurnStart);
-
-        const _thresholdSuggestions = _.cloneDeep(this.thresholdSuggestions);
-
-        const _minValues = _thresholdSuggestions.min.map(_minConfig => {
-            return this._getMinRequiredTurns(_minConfig.label, _minConfig.threshold);
-        });
-
-        const _maxValues = _thresholdSuggestions.max.map(_maxConfig => {
-            return this._getMaxRecommendedTurns(_maxConfig.label, _maxConfig.threshold);
-        });
-
-        const _minTurns = Math.max(..._minValues);
-        const _maxTurns = Math.min(..._maxValues);
-        const _recommendedTurns = _minTurns <= _maxTurns ? _maxTurns : _minTurns;
-
-        return {
-            recommended: _maxTurns !== 0 && _minTurns <= _maxTurns,
-            recommendedTurns: _recommendedTurns,
-            amountInCargoAtTurnStart: _amountInCargoAtTurnStart,
-            amountInCargoAfterLeave: this.table.getCellValue(_recommendedTurns, 'amountInCargoAfterLeave')
-        }
+        return this._tableWrapper;
     }
 }
 
-module.exports = CollectionRateAtCellTableGenerator;
+module.exports = CollectionRateAtCellAnalyzer;
