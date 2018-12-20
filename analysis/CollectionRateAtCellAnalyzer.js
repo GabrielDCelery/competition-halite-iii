@@ -215,7 +215,7 @@ class CollectionRateAtCellTableGenerator {
 
         return {
             recommended: _maxTurns !== 0 && _minTurns <= _maxTurns,
-            recommededTurns: _recommendedTurns,
+            recommendedTurns: _recommendedTurns,
             amountInCargoAtTurnStart: _amountInCargoAtTurnStart,
             amountInCargoAfterLeave: this.table.getCellValue(_recommendedTurns, 'amountInCargoAfterLeave')
         }
