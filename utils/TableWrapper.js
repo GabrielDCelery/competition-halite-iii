@@ -5,6 +5,7 @@ const _ = require('lodash');
 class TableWrapper {
     constructor (_2DMatrix) {
         this._table = TableWrapper._clone2DMatrix(_2DMatrix);
+        this._transposedTable = _.zip(this._table);
         this._numOfRows = this._table.length;
         this._numOfColumns = this._table[0].length;
         this._rowLabels = {};
@@ -28,6 +29,7 @@ class TableWrapper {
         const _colIndex = this._columnLabels.hasOwnProperty(_colLabel) ? this._columnLabels[_colLabel] : _colLabel;
 
         this._table[_rowIndex][_colIndex] = _value;
+        this._transposedTable[_colIndex][_rowIndex] = _value;
     }
 
     getCellValue (_rowLabel, _colLabel) {
@@ -39,12 +41,27 @@ class TableWrapper {
 
     setCellValueByIndex (_rowIndex, _colIndex, _value) {
         this._table[_rowIndex][_colIndex] = _value;
+        this._transposedTable[_colIndex][_rowIndex] = _value;
 
         return _value;
     }
 
     getCellValueByIndex (_rowIndex, _colIndex) {
         return this._table[_rowIndex][_colIndex];
+    }
+
+    getRowByIndex (_rowIndex) {
+        return this._table[_rowIndex];
+    }
+
+    getColumnByIndex (_colIndex) {
+        return this._transposedTable[_colIndex];
+    }
+
+    getColumnByLabel (_colLabel) {
+        const _colIndex = this._columnLabels.hasOwnProperty(_colLabel) ? this._columnLabels[_colLabel] : _colLabel;
+
+        return this._transposedTable[_colIndex];
     }
 
     getTable () {

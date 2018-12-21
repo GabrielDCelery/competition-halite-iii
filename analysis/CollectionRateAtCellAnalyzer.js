@@ -1,6 +1,5 @@
 'use strict';
 
-const _ = require('lodash');
 const TableWrapper = require('../utils/TableWrapper');
 
 const CARGO_MAXIMUM_AMOUNT = 1000;
@@ -28,7 +27,10 @@ class CollectionRateAtCellAnalyzer {
     constructor (_numOfTurnsToAnalyze) {
         this._numOfTurnsToAnalyze = _numOfTurnsToAnalyze;
         this._tableWrapper = new TableWrapper(
-                TableWrapper.generateEmptyTable(this._numOfTurnsToAnalyze + 1, _.size(CollectionRateAtCellAnalyzer.COLUMN_LABELS))
+                TableWrapper.generateEmptyTable(
+                    this._numOfTurnsToAnalyze + 1, 
+                    Object.keys(CollectionRateAtCellAnalyzer.COLUMN_LABELS).length
+                )
             )
             .setColumnLabel(CollectionRateAtCellAnalyzer.COLUMN_LABELS.AMOUNT_IN_CARGO_AT_TURN_START, 0)
             .setColumnLabel(CollectionRateAtCellAnalyzer.COLUMN_LABELS.AMOUNT_ON_CELL_AT_TURN_START, 1)

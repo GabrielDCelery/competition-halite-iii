@@ -1,71 +1,106 @@
 'use strict';
 
-const _ = require('lodash');
-const CollectionRateAtCellAnalyzer = require('./CollectionRateAtCellAnalyzer');
-
 class TurnsToSpendAtCellSuggestor {
+    constructor () {
+        this._collectionRateTable = null;
+        this._thresholds = null;
+    }
+
     setCollectionRateTable (_collectionRateTable) {
         this._collectionRateTable = _collectionRateTable;
 
         return this;
     }
 
-    setThresholds (_thresholds) {
-        this._thresholds = _thresholds;
+    setThresholds (_thresholdConfigs) {
+        this._thresholdConfigs = _thresholdConfigs;
 
         return this;
     }
 
-    _getMaxRecommendedTurns (_columnLabel, _threshold) {
-        const _numOfTurns = this._collectionRateTable.getTable().length;
-
-        for (let _i = 0, _iMax = _numOfTurns; _i < _iMax; _i++) {
-            if (_i + 1 === _iMax) {
-                continue;
-            }
-
-            const _cellValue = this._collectionRateTable.getCellValue(_i, _columnLabel);
-            const _nextCellValue = this._collectionRateTable.getCellValue(_i + 1, _columnLabel);
-
-            if (_threshold <= _cellValue && _threshold > _nextCellValue) {
+    _getMinRequiredTurnsInDecreasingArray (_cellValues, _maxThreshold) {
+        for (let _i = 0, _iMax = _cellValues.length; _i < _iMax; _i++) {
+            if (_cellValues[_i] <= _maxThreshold) {
                 return _i;
             }
         }
 
-        return 0;
+        return _cellValues.length - 1;
     }
 
-    _getMinRequiredTurns (_columnLabel, _threshold) {
-        const _numOfTurns = this._collectionRateTable.getTable().length;
+    _getMaxAllowedTurnsInDecreasingArray (_cellValues, _minThreshold) {
+        if (_cellValues[0] >= 0 && _cellValues[0] < _minThreshold) {
+            return 0;
+        }
 
-        for (let _i = 0, _iMax = _numOfTurns; _i <= _iMax; _i++) {
-            const _cellValue = this._collectionRateTable.getCellValue(_i, _columnLabel);
+        for (let _i = 1, _iMax = _cellValues.length; _i < _iMax; _i++) {
+            if (_cellValues[_i] < _minThreshold) {
+                return _i - 1;
+            }
+        }
+    }
 
-            if (_cellValue <= _threshold) {
+    _getMinRequiredTurnsInIncreasingArray (_cellValues, _minThreshold) {
+        for (let _i = 0, _iMax = _cellValues.length; _i < _iMax; _i++) {
+            if (_minThreshold <= _cellValues[_i]) {
                 return _i;
             }
         }
 
-        return _numOfTurns;
+        return _cellValues.length - 1;
+    }
+
+    _getMaxAllowedTurnsInIncreasingArray (_cellValues, _maxThreshold) {
+        if (_maxThreshold[0] <= _cellValues[0]) {
+            return 0;
+        }
+
+        for (let _i = 1, _iMax = _cellValues.length; _i < _iMax; _i++) {
+            if (_cellValues[_i] <= _maxThreshold) {
+                return _i - 1;
+            }
+        }
+
+        return _cellValues.length - 1;
     }
 
     calculate () {
-        const _minValues = this._thresholds.min.map(_minConfig => {
-            return this._getMinRequiredTurns(_minConfig.label, _minConfig.threshold);
+        const _minRecommendedTurns = [];
+        const _maxAllowedTurns = [];
+
+        this._thresholdConfigs.forEach(_config => {
+            const _cellValues = this._collectionRateTable.getColumnByLabel(_config.label);
+            const _firstElem = _cellValues[0] < 0 ? _cellValues[1] : _cellValues[0];
+            const _bIsArrayIncreasing = _firstElem <= _cellValues[_cellValues.length - 1];
+
+            if (_bIsArrayIncreasing) {
+                if (_config.minThreshold) {
+                    _minRecommendedTurns.push(this._getMinRequiredTurnsInIncreasingArray(_cellValues, _config.minThreshold));
+                }
+
+                if (_config.maxThreshold) {
+                    _maxAllowedTurns.push(this._getMaxAllowedTurnsInIncreasingArray(_cellValues, _config.maxThreshold));
+                }
+            } else {
+                if (_config.minThreshold) {
+                    _maxAllowedTurns.push(this._getMaxAllowedTurnsInDecreasingArray(_cellValues, _config.minThreshold));
+                }
+
+                if (_config.maxThreshold) {
+                    _minRecommendedTurns.push(this._getMinRequiredTurnsInDecreasingArray(_cellValues, _config.maxThreshold));
+                }
+            }
         });
 
-        const _maxValues = this._thresholds.max.map(_maxConfig => {
-            return this._getMaxRecommendedTurns(_maxConfig.label, _maxConfig.threshold);
-        });
+        console.log(`_minRecommendedTurns ${_minRecommendedTurns}`)
+        console.log(`_maxAllowedTurns ${_maxAllowedTurns}`)
 
-        const _minTurns = _minValues.length === 0 ? 0 : Math.max(..._minValues);
-        const _maxTurns = _maxValues.length === 0 ? 0 : Math.min(..._maxValues);
-
-        const _recommendedTurns = _minTurns <= _maxTurns ? _maxTurns : _minTurns;
+        const _chosenMinRecommendedTurns = _minRecommendedTurns.length === 0 ? 0 : Math.max(..._minRecommendedTurns);
+        const _chosenMaxAllowedTurns = _maxAllowedTurns.length === 0 ? 0 : Math.min(..._maxAllowedTurns);
 
         return {
-            recommended: _maxTurns !== 0 && _minTurns <= _maxTurns,
-            turns: _recommendedTurns
+            recommended: _chosenMaxAllowedTurns !== 0 && _chosenMinRecommendedTurns <= _chosenMaxAllowedTurns,
+            turns: _chosenMinRecommendedTurns <= _chosenMaxAllowedTurns ? _chosenMaxAllowedTurns : _chosenMinRecommendedTurns
         }
     }
 }
