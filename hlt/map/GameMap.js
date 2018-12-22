@@ -1,142 +1,10 @@
-const constants = require('./constants');
-const { Ship, Dropoff, Shipyard } = require('./entity');
-const { Direction, Position } = require('./positionals');
+'use strict';
 
-/** Player object, containing all entities/metadata for the player. */
-class Player {
-    constructor(playerId, shipyard, halite=0) {
-        this.id = playerId;
-        this.shipyard = shipyard;
-        this.haliteAmount = halite;
-        this._ships = new Map();
-        this._dropoffs = new Map();
-    }
-
-    /** Get a single ship by its ID. */
-    getShip(shipId) {
-        return this._ships.get(shipId);
-    }
-
-    /** Get a list of the player's ships. */
-    getShips() {
-        const result = [];
-        for (const ship of this._ships.values()) {
-            result.push(ship);
-        }
-        return result;
-    }
-
-    /** Get a single dropoff by its ID. */
-    getDropoff(dropoffId) {
-        return this._dropoffs.get(dropoffId);
-    }
-
-    /** Get a list of the player's dropoffs. */
-    getDropoffs() {
-        const result = [];
-        for (const dropoff of this._dropoffs.values()) {
-            result.push(dropoff);
-        }
-        return result;
-    }
-
-    /** Check whether a ship with a given ID exists. */
-    hasShip(shipId) {
-        return this._ships.has(shipId);
-    }
-
-    /**
-     * Create a player object using input from the game engine.
-     * @private
-     */
-    static async _generate(getLine) {
-        const line = await getLine();
-        const [ playerId, shipyardX, shipyardY ] = line
-              .split(/\s+/)
-              .map(x => parseInt(x, 10));
-        return new Player(playerId,
-                          new Shipyard(playerId, -1, new Position(shipyardX, shipyardY)));
-    }
-
-    /**
-     * Update the player object for the current turn using input from
-     * the game engine.
-     * @private
-     */
-    async _update(numShips, numDropoffs, halite, getLine) {
-        this.haliteAmount = halite;
-        this._ships = new Map();
-        for (let i = 0; i < numShips; i++) {
-            const [ shipId, ship ] = await Ship._generate(this.id, getLine);
-            this._ships.set(shipId, ship);
-        }
-        this._dropoffs = new Map();
-        for (let i = 0; i < numDropoffs; i++) {
-            const [ dropoffId, dropoff ] = await Dropoff._generate(this.id, getLine);
-            this._dropoffs.set(dropoffId, dropoff);
-        }
-    }
-}
-
-/** A cell on the game map. */
-class MapCell {
-    constructor(position, halite) {
-        this.position = position;
-        this.haliteAmount = halite;
-        this.ship = null;
-        this.structure = null;
-    }
-
-    /**
-     * @returns {Boolean} whether this cell has no ships or structures.
-     */
-    get isEmpty() {
-        return !this.isOccupied && !this.hasStructure;
-    }
-
-    /**
-     * @returns {Boolean} whether this cell has any ships.
-     */
-    get isOccupied() {
-        return this.ship !== null;
-    }
-
-    /**
-     * @returns {Boolean} whether this cell has any structures.
-     */
-    get hasStructure() {
-        return this.structure !== null;
-    }
-
-    /**
-     * @returns The type of the structure in this cell, or null.
-     */
-    get structureType() {
-        if (this.hasStructure) {
-            return this.structure.constructor;
-        }
-        return null;
-    }
-
-    /**
-     * Mark this cell as unsafe (occupied) for navigation.
-     *
-     * Use in conjunction with {@link GameMap#getSafeMove}.
-     *
-     * @param {Ship} ship The ship occupying this cell.
-     */
-    markUnsafe(ship) {
-        this.ship = ship;
-    }
-
-    equals(other) {
-        return this.position.equals(other.position);
-    }
-
-    toString() {
-        return `MapCell(${this.position}, halite=${this.haliteAmount})`;
-    }
-}
+const Ship = require('../entities/Ship');
+const Direction = require('./helpers/Direction');
+const Position = require('./helpers/Position');
+const TableWrapper = require('../../utils/TableWrapper');
+const MapCell = require('./MapCell');
 
 /**
  * The game map.
@@ -275,21 +143,16 @@ class GameMap {
         return Direction.Still;
     }
 
-    static async _generate(getLine) {
-        const [ mapWidth, mapHeight ] = (await getLine())
-              .split(/\s+/)
-              .map(x => parseInt(x, 10));
-        const gameMap = [];
-        for (let i = 0; i < mapHeight; i++) {
-            const row = [];
-            row.fill(null, 0, mapWidth);
-            gameMap.push(row);
-        }
+    static async _generate(_readAndParseLine) {
+        const [ mapWidth, mapHeight ] = await _readAndParseLine();
+
+        const gameMap = TableWrapper.generateEmptyTable (mapHeight, mapWidth);
 
         for (let y = 0; y < mapHeight; y++) {
-            const cells = (await getLine()).split(/\s+/);
+            const cells = await _readAndParseLine();
+
             for (let x = 0; x < mapWidth; x++) {
-                gameMap[y][x] = new MapCell(new Position(x, y), parseInt(cells[x], 10));
+                gameMap[y][x] = new MapCell(new Position(x, y), cells[x]);
             }
         }
 
@@ -320,8 +183,4 @@ class GameMap {
     }
 }
 
-module.exports = {
-    Player,
-    GameMap,
-    MapCell,
-};
+module.exports = GameMap;

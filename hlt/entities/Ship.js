@@ -1,45 +1,9 @@
-const { Direction, Position } = require('./positionals');
+'use strict';
 
-const commands = require('./commands');
-const constants = require('./constants');
-
-/** Base entity class for Ships, Dropoffs, and Shipyards. */
-class Entity {
-    constructor(owner, id, position) {
-        this.owner = owner;
-        this.id = id;
-        this.position = position;
-    }
-
-    toString() {
-        return `${this.constructor.name}(id=${this.id}, ${this.position})`;
-    }
-}
-
-/** Represents a dropoff. */
-class Dropoff extends Entity {
-    /**
-     * Create a Dropoff for a specific player from the engine input.
-     * @private
-     * @param playerId the player that owns this dropoff
-     * @param {Function} getLine function to read a line of input
-     * @returns {Dropoff}
-     */
-    static async _generate(playerId, getLine) {
-        const [ id, xPos, yPos ] = (await getLine())
-              .split(/\s+/)
-              .map(x => parseInt(x, 10));
-        return [ id, new Dropoff(playerId, id, new Position(xPos, yPos)) ];
-    }
-}
-
-/** Represents a shipyard. */
-class Shipyard extends Entity {
-    /** Return a move to spawn a new ship at your shipyard. */
-    spawn() {
-        return commands.GENERATE;
-    }
-}
+const commands = require('../settings/commands');
+const constants = require('../settings/constants');
+const Entity = require('./Entity');
+const Position = require('../map/helpers/Position');
 
 /** Represents a ship. */
 class Ship extends Entity {
@@ -98,9 +62,4 @@ class Ship extends Entity {
     }
 }
 
-module.exports = {
-    Entity,
-    Ship,
-    Dropoff,
-    Shipyard,
-};
+module.exports = Ship;

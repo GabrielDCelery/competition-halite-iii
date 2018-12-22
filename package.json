@@ -1,0 +1,27 @@
+{
+  "name": "halite-iiii-ai-challenge",
+  "version": "1.0.0",
+  "description": "## Halite III starter kit components * MyBot.{extension}, a starter bot outline * /hlt directory, which contains modifiable helper functions for your bot * A Halite executable that enables local playtesting of your bot * The scripts run_game.bat (Windows) and run_game.sh (MacOS, Linux)",
+  "main": "MyBot.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "dependencies": {
+    "jest": "^23.6.0",
+    "lodash": "^4.17.11"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GabrielDCelery/halite-iiii-ai-challenge.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GabrielDCelery/halite-iiii-ai-challenge/issues"
+  },
+  "homepage": "https://github.com/GabrielDCelery/halite-iiii-ai-challenge#readme"
+}

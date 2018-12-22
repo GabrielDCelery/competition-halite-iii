@@ -1,8 +1,8 @@
 const hlt = require('./hlt');
-const { Direction } = require('./hlt/positionals');
-const logging = require('./hlt/logging');
+const { Direction }  = require('./hlt');
+const logging = require('./hlt/utils/logging');
 
-const game = new hlt.Game();
+const game = new hlt.GameInstance();
 game.initialize().then(async () => {
     // At this point "game" variable is populated with initial map data.
     // This is a good place to do computationally expensive start-up pre-processing.
