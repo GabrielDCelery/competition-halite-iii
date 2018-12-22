@@ -64,7 +64,7 @@ class TurnsToSpendAtCellSuggestor {
         return _cellValues.length - 1;
     }
 
-    calculate () {
+    suggest () {
         const _minRecommendedTurns = [];
         const _maxAllowedTurns = [];
 
@@ -92,10 +92,7 @@ class TurnsToSpendAtCellSuggestor {
             }
         });
 
-        console.log(`_minRecommendedTurns ${_minRecommendedTurns}`)
-        console.log(`_maxAllowedTurns ${_maxAllowedTurns}`)
-
-        const _chosenMinRecommendedTurns = _minRecommendedTurns.length === 0 ? 0 : Math.max(..._minRecommendedTurns);
+        const _chosenMinRecommendedTurns = _minRecommendedTurns.length === 0 ? _cellValues.length - 1 : Math.max(..._minRecommendedTurns);
         const _chosenMaxAllowedTurns = _maxAllowedTurns.length === 0 ? 0 : Math.min(..._maxAllowedTurns);
 
         return {
