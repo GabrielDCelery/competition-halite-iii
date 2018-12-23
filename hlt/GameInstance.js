@@ -93,11 +93,11 @@ class GameInstance {
 
         for (const player of this.players.values()) {
             for (const ship of player.getShips()) {
-                this.gameMap.get(ship.position).markUnsafe(ship);
+                this.gameMap.getMapCellByPosition(ship.position).markUnsafe(ship);
             }
-            this.gameMap.get(player.shipyard.position).structure = player.shipyard;
+            this.gameMap.getMapCellByPosition(player.shipyard.position).structure = player.shipyard;
             for (const dropoff of player.getDropoffs()) {
-                this.gameMap.get(dropoff.position).structure = dropoff;
+                this.gameMap.getMapCellByPosition(dropoff.position).structure = dropoff;
             }
         }
     }

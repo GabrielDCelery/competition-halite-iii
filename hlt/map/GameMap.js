@@ -19,39 +19,20 @@ class GameMap {
         this._cells = cells;
     }
 
-    /**
-     * Getter for position object or entity objects within the game map
-     * @param location the position or entity to access in this map
-     * @returns the contents housing that cell or entity
-    */
-    get(...args) {
-        if (args.length === 2) {
-            return this._cells[args[1]][args[0]];
-        }
-        let [ location ] = args;
-        if (location instanceof Position) {
-            location = this.normalize(location);
-            return this._cells[location.y][location.x];
-        }
-        else if (location.position) {
-            return this.get(location.position);
-        }
-        return null;
+    getMapCellByIndex (_x, _y) {
+        return this._cells[_y][_x];
     }
 
-    /**
-     * Compute the Manhattan distance between two locations.
-     * Accounts for wrap-around.
-     * @param source The source from where to calculate
-     * @param target The target to where calculate
-     * @returns The distance between these items
-    */
-    calculateDistance(source, target) {
-        source = this.normalize(source);
-        target = this.normalize(target);
-        const delta = source.sub(target).abs();
-        return Math.min(delta.x, this.width - delta.x) +
-            Math.min(delta.y, this.height - delta.y);
+    getMapCellByPosition (_positionObj) {
+        const _normalizedPositionObj = this.normalize(_positionObj);
+
+        return this._cells[_normalizedPositionObj.y][_normalizedPositionObj.x];
+    }
+
+    calculateManhattanDistance(_source, _target) {
+        const _delta = this.normalize(_source).sub(this.normalize(_target)).abs();
+
+        return Math.min(_delta.x, this.width - _delta.x) + Math.min(_delta.y, this.height - _delta.y);
     }
 
     /**
@@ -134,8 +115,8 @@ class GameMap {
         for (const direction of this.getUnsafeMoves(ship.position, destination)) {
             const targetPos = ship.position.directionalOffset(direction);
 
-            if (!this.get(targetPos).isOccupied) {
-                this.get(targetPos).markUnsafe(ship);
+            if (!this.getMapCellByPosition(targetPos).isOccupied) {
+                this.getMapCellByPosition(targetPos).markUnsafe(ship);
                 return direction;
             }
         }
@@ -168,7 +149,7 @@ class GameMap {
         // later)
         for (let y = 0; y < this.height; y++) {
             for (let x = 0; x < this.width; x++) {
-                this.get(x, y).ship = null;
+                this.getMapCellByIndex(x, y).ship = null;
             }
         }
 
@@ -178,7 +159,7 @@ class GameMap {
             const [ cellX, cellY, cellEnergy ] = line
                   .split(/\s+/)
                   .map(x => parseInt(x, 10));
-            this.get(cellX, cellY).haliteAmount = cellEnergy;
+            this.getMapCellByIndex(cellX, cellY).haliteAmount = cellEnergy;
         }
     }
 }
