@@ -12,6 +12,39 @@ class Player {
         this.haliteAmount = halite;
         this._ships = new Map();
         this._dropoffs = new Map();
+        this.gameMap = null;
+
+        this.setShipyard = this.setShipyard.bind(this);
+        this.setGameMap = this.setGameMap.bind(this);
+        this.getShipyard = this.getShipyard.bind(this);
+        this.getGameMap = this.getGameMap.bind(this);
+    }
+
+    setShipyard (_shipyardX, _shipyardY) {
+        this.shipyard = new Shipyard(this.id, -1, new Position(_shipyardX, _shipyardY));
+
+        return this;
+    }
+
+    getShipyard () {
+        return this.shipyard;
+    }
+
+    setGameMap (_gameMap) {
+        this.gameMap = _gameMap;
+
+        return this;
+    }
+
+    getGameMap () {
+        return this.gameMap;
+    }
+
+    getPlayerData () {
+        return {
+            shipyard: this.shipyard,
+            gameMap: this.gameMap
+        }
     }
 
     /** Get a single ship by its ID. */
@@ -48,17 +81,6 @@ class Player {
     }
 
     /**
-     * Create a player object using input from the game engine.
-     * @private
-     */
-
-    static async _createPlayer (_readAndParseLine) {
-        const [ _playerId, _shipyardX, _shipyardY ] = await _readAndParseLine();
-
-        return new Player(_playerId, new Shipyard(_playerId, -1, new Position(_shipyardX, _shipyardY)));
-    }
-
-    /**
      * Update the player object for the current turn using input from
      * the game engine.
      * @private
@@ -68,6 +90,12 @@ class Player {
         this._ships = new Map();
         for (let i = 0; i < numShips; i++) {
             const [ shipId, ship ] = await Ship._generate(this.id, getLine);
+
+            ship.setPlayerPublicMethods({
+                getShipyard: this.getShipyard,
+                getGameMap: this.getGameMap
+            }).initState();
+
             this._ships.set(shipId, ship);
         }
         this._dropoffs = new Map();

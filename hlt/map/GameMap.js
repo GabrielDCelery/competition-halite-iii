@@ -17,6 +17,7 @@ class GameMap {
         this.width = width;
         this.height = height;
         this._cells = cells;
+        this.Direction = Direction;
     }
 
     getMapCellByIndex (_x, _y) {
@@ -60,7 +61,7 @@ class GameMap {
      * coordinates (note the inversion), or null if the coordinates
      * are the same.
      */
-    static _getTargetDirection(source, target) {
+    _getTargetDirection(source, target) {
         return [
             target.y > source.y ? Direction.South :
                 (target.y < source.y ? Direction.North : null),
@@ -91,7 +92,7 @@ class GameMap {
 
         const possibleMoves = [];
         const distance = destination.sub(source).abs();
-        const [ yDir, xDir ] = GameMap._getTargetDirection(source, destination);
+        const [ yDir, xDir ] = this._getTargetDirection(source, destination);
 
         if (distance.x !== 0) {
             possibleMoves.push(distance.x < (this.width / 2) ? xDir : xDir.invert());

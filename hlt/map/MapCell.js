@@ -9,6 +9,10 @@ class MapCell {
         this.structure = null;
     }
 
+    getHaliteAmount () {
+        return this.haliteAmount;
+    }
+
     /**
      * @returns {Boolean} whether this cell has no ships or structures.
      */

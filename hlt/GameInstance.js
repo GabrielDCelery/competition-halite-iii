@@ -8,6 +8,8 @@ const Player = require('./Player');
 class GameInstance {
     constructor() {
         this.turnNumber = 0;
+        this.myId = null;
+        this.players = null;
         this.me = null;
         this.gameMap = null;
 
@@ -53,19 +55,27 @@ class GameInstance {
     async initialize() {
         constants.loadConstants(JSON.parse(await this._getLine()));
 
-        const [ numPlayers, myId ] = await this._readAndParseLine();
+        const [ _numOfPlayers, myId ] = await this._readAndParseLine();
         this.myId = myId;
 
         logging.setup(`bot-${myId}.log`);
 
         this.players = new Map();
 
-        for (let i = 0; i < numPlayers; i++) {
-            this.players.set(i, await Player._createPlayer(this._readAndParseLine));
+        for (let i = 0; i < _numOfPlayers; i++) {
+            const [ _playerId, _shipyardX, _shipyardY ] = await this._readAndParseLine();
+
+            const _player = new Player(_playerId).setShipyard(_shipyardX, _shipyardY);
+
+            this.players.set(i, _player);
         }
         this.me = this.players.get(this.myId);
 
         this.gameMap = await GameMap._generate(this._readAndParseLine);
+
+        this.players.forEach(_player => {
+            return _player.setGameMap(this.gameMap);
+        });
     }
 
     /** Indicate that your bot is ready to play. */

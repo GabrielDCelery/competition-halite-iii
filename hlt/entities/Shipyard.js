@@ -1,9 +1,9 @@
 'use strict';
 
 const commands = require('../settings/commands');
-const Entity = require('./Entity');
+const GameEntity = require('./GameEntity');
 
-class Shipyard extends Entity {
+class Shipyard extends GameEntity {
     spawn() {
         return commands.GENERATE;
     }

@@ -2,19 +2,28 @@
 
 const commands = require('../settings/commands');
 const constants = require('../settings/constants');
-const Entity = require('./Entity');
+const GameEntity = require('./GameEntity');
 const Position = require('../map/helpers/Position');
+const ShipStateFactory = require('./ShipStateFactory');
 
 /** Represents a ship. */
-class Ship extends Entity {
-    constructor(owner, id, position, haliteAmount) {
-        super(owner, id, position);
-        this.haliteAmount = haliteAmount;
+class Ship extends GameEntity {
+    constructor(_owner, _id, _position, _haliteAmount) {
+        super(_owner, _id, _position);
+        this.haliteAmount = _haliteAmount;
+    }
+
+    initState () {
+        this.state = new ShipStateFactory(this);
     }
 
     /** Is this ship at max halite capacity? */
     get isFull() {
         return this.haliteAmount >= constants.MAX_HALITE;
+    }
+
+    getHaliteInCargo () {
+        return this.haliteAmount;
     }
 
     /** Return a move to turn this ship into a dropoff. */
@@ -42,6 +51,10 @@ class Ship extends Entity {
      */
     stayStill() {
         return `${commands.MOVE} ${this.id} ${commands.STAY_STILL}`;
+    }
+
+    createCommandForTurn() {
+        return this.state.createCommandForTurn();
     }
 
     /**

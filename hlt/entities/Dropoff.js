@@ -1,8 +1,8 @@
 'use strict';
 
-const Entity = require('./Entity');
+const GameEntity = require('./GameEntity');
 
-class Dropoff extends Entity {
+class Dropoff extends GameEntity {
     static async _generate(playerId, getLine) {
         const [ id, xPos, yPos ] = (await getLine())
               .split(/\s+/)
