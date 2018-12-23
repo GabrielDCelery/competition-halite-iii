@@ -1,8 +1,8 @@
 const hlt = require('./hlt');
-const { Direction } = require('./hlt/positionals');
-const logging = require('./hlt/logging');
+const { Direction }  = require('./hlt');
+const logging = require('./hlt/utils/logging');
 
-const game = new hlt.Game();
+const game = new hlt.GameInstance();
 game.initialize().then(async () => {
     // At this point "game" variable is populated with initial map data.
     // This is a good place to do computationally expensive start-up pre-processing.
@@ -24,7 +24,7 @@ game.initialize().then(async () => {
                 const safeMove = gameMap.naiveNavigate(ship, destination);
                 commandQueue.push(ship.move(safeMove));
             }
-            else if (gameMap.get(ship.position).haliteAmount < hlt.constants.MAX_HALITE / 10) {
+            else if (gameMap.getMapCellByPosition(ship.position).haliteAmount < hlt.constants.MAX_HALITE / 10) {
                 const direction = Direction.getAllCardinals()[Math.floor(4 * Math.random())];
                 const destination = ship.position.directionalOffset(direction);
                 const safeMove = gameMap.naiveNavigate(ship, destination);
@@ -34,7 +34,7 @@ game.initialize().then(async () => {
 
         if (game.turnNumber < 0.75 * hlt.constants.MAX_TURNS &&
             me.haliteAmount >= hlt.constants.SHIP_COST &&
-            !gameMap.get(me.shipyard).isOccupied) {
+            !gameMap.getMapCellByPosition(me.shipyard.position).isOccupied) {
             commandQueue.push(me.shipyard.spawn());
         }
 
