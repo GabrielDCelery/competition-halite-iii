@@ -18,6 +18,7 @@ class Player {
         this.setGameMap = this.setGameMap.bind(this);
         this.getShipyard = this.getShipyard.bind(this);
         this.getGameMap = this.getGameMap.bind(this);
+        this.initialized = false;
     }
 
     setShipyard (_shipyardX, _shipyardY) {
@@ -85,22 +86,35 @@ class Player {
      * the game engine.
      * @private
      */
-    async _update(numShips, numDropoffs, halite, getLine) {
+    async _update(numShips, numDropoffs, halite, _readAndParseLine) {
         this.haliteAmount = halite;
-        this._ships = new Map();
+        const _newShipMap = new Map();
+
         for (let i = 0; i < numShips; i++) {
-            const [ shipId, ship ] = await Ship._generate(this.id, getLine);
+            const [ shipId, xPos, yPos, halite ] = await _readAndParseLine();
 
-            ship.setPlayerPublicMethods({
-                getShipyard: this.getShipyard,
-                getGameMap: this.getGameMap
-            }).initState();
+            let ship = this._ships.get(shipId);
 
-            this._ships.set(shipId, ship);
+            if (!ship) {
+                ship = new Ship(this.id, shipId, new Position(xPos, yPos), halite)
+                    .setPlayerPublicMethods({
+                        getShipyard: this.getShipyard,
+                        getGameMap: this.getGameMap
+                    })
+                    .initState();
+            }
+
+            ship.setPosition(new Position(xPos, yPos)).setHaliteAmountInCargo(halite);
+
+            _newShipMap.set(shipId, ship);
         }
+        this._ships = _newShipMap;
+
         this._dropoffs = new Map();
         for (let i = 0; i < numDropoffs; i++) {
-            const [ dropoffId, dropoff ] = await Dropoff._generate(this.id, getLine);
+            const [ dropoffId, xPos, yPos ] = await _readAndParseLine();
+            const dropoff = new Dropoff(this.id, dropoffId, new Position(xPos, yPos));
+
             this._dropoffs.set(dropoffId, dropoff);
         }
     }

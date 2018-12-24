@@ -10,7 +10,7 @@ class CollectHalite {
     }
 
     checkIfNeedsToTransitionToNewState () {
-        if (constants.MAX_HALITE / 2 < this.ship.getHaliteInCargo()) {
+        if (constants.MAX_HALITE * 0.8 < this.ship.getHaliteInCargo()) {
             return this.validStates.MoveToDropoff;
         }
 
@@ -21,7 +21,11 @@ class CollectHalite {
         const _haliteOnTile = this.gameMap.getMapCellByPosition(this.ship.getPosition()).getHaliteAmount();
         const _haliteInShipCargo = this.ship.getHaliteInCargo();
 
-        if (_haliteInShipCargo === 0 || (_haliteOnTile < constants.MAX_HALITE / 10 && Math.floor(_haliteOnTile / 10) < _haliteInShipCargo)) {
+        const _isOnShipyard = _haliteOnTile === 0 && _haliteInShipCargo === 0;
+        const _canMove = Math.floor(_haliteOnTile / 10) < _haliteInShipCargo;
+        const _notWorthToStayOnTile = _haliteOnTile < constants.MAX_HALITE / 10 || _haliteOnTile < _haliteInShipCargo * 0.3;
+
+        if (_isOnShipyard || (_notWorthToStayOnTile && _canMove)) {
             const _direction = this.gameMap.Direction.getAllCardinals()[Math.floor(4 * Math.random())];
             const _destination = this.ship.getPosition().directionalOffset(_direction);
             const _safeMove = this.gameMap.naiveNavigate(this.ship, _destination);

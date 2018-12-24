@@ -13,8 +13,16 @@ class Ship extends GameEntity {
         this.haliteAmount = _haliteAmount;
     }
 
+    setHaliteAmountInCargo (_haliteAmount) {
+        this.haliteAmount = _haliteAmount;
+
+        return this;
+    }
+
     initState () {
         this.state = new ShipStateFactory(this);
+
+        return this;
     }
 
     /** Is this ship at max halite capacity? */
@@ -55,19 +63,6 @@ class Ship extends GameEntity {
 
     createCommandForTurn() {
         return this.state.createCommandForTurn();
-    }
-
-    /**
-     * Create a Ship instance for a player using the engine input.
-     * @param playerId the owner
-     * @return The ship ID and ship object.
-     * @private
-     */
-    static async _generate(playerId, getLine) {
-        const [ shipId, xPos, yPos, halite ] = (await getLine())
-              .split(/\s+/)
-              .map(x => parseInt(x, 10));
-        return [ shipId, new Ship(playerId, shipId, new Position(xPos, yPos), halite) ];
     }
 
     toString() {

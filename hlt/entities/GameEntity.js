@@ -14,6 +14,12 @@ class GameEntity {
         return this;
     }
 
+    setPosition (_position) {
+        this.position = _position;
+
+        return this;
+    }
+
     getPlayerPublicMethods () {
         return this.playerPublicMethods;
     }

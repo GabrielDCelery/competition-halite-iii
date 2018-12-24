@@ -91,10 +91,8 @@ class GameInstance {
         logging.info(`================ TURN ${this.turnNumber.toString().padStart(3, '0')} ================`);
 
         for (let i = 0; i < this.players.size; i++) {
-            const [ player, numShips, numDropoffs, halite ] = (await this._getLine())
-                  .split(/\s+/)
-                  .map(x => parseInt(x, 10));
-            await this.players.get(player)._update(numShips, numDropoffs, halite, this._getLine);
+            const [ _playerId, numShips, numDropoffs, halite ] = await this._readAndParseLine();
+            await this.players.get(_playerId)._update(numShips, numDropoffs, halite, this._readAndParseLine);
         }
 
         await this.gameMap._update(this._getLine);
