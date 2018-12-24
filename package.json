@@ -1,5 +1,5 @@
 {
-  "name": "halite",
+  "name": "halite-iiii-ai-challenge",
   "version": "1.0.0",
   "description": "## Halite III starter kit components * MyBot.{extension}, a starter bot outline * /hlt directory, which contains modifiable helper functions for your bot * A Halite executable that enables local playtesting of your bot * The scripts run_game.bat (Windows) and run_game.sh (MacOS, Linux)",
   "main": "MyBot.js",

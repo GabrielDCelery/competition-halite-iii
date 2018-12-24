@@ -1,4 +1,6 @@
-const commands = require('./commands');
+'use strict';
+
+const commands = require('../../settings/commands');
 
 class Direction {
     constructor(dx, dy) {
@@ -56,59 +58,11 @@ class Direction {
         throw new Error(`Non-cardinal direction cannot be inverted: ${this}`);
     }
 }
+
 Direction.North = new Direction(0, -1);
 Direction.South = new Direction(0, 1);
 Direction.East = new Direction(1, 0);
 Direction.West = new Direction(-1, 0);
 Direction.Still = new Direction(0, 0);
 
-class Position {
-    constructor(x, y) {
-        this.x = x;
-        this.y = y;
-    }
-
-    directionalOffset(direction) {
-        return this.add(new Position(direction.dx, direction.dy));
-    }
-
-    getSurroundingCardinals() {
-        return Direction.getAllCardinals()
-            .map(currentDirection => this.directionalOffset(currentDirection));
-    }
-
-    add(other) {
-        return new Position(this.x + other.x, this.y + other.y);
-    }
-
-    sub(other) {
-        return new Position(this.x - other.x, this.y - other.y);
-    }
-
-    addMut(other) {
-        this.x += other.x;
-        this.y += other.y;
-    }
-
-    subMut(other) {
-        this.x -= other.x;
-        this.y -= other.y;
-    }
-
-    abs() {
-        return new Position(Math.abs(this.x), Math.abs(this.y));
-    }
-
-    equals(other) {
-        return this.x === other.x && this.y === other.y;
-    }
-
-    toString() {
-        return `${this.constructor.name}(${this.x}, ${this.y})`;
-    }
-}
-
-module.exports = {
-    Direction,
-    Position,
-};
+module.exports = Direction;

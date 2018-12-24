@@ -1,15 +1,21 @@
 'use strict';
 
-const _ = require('lodash');
-
 class TableWrapper {
     constructor (_2DMatrix) {
         this._table = TableWrapper._clone2DMatrix(_2DMatrix);
-        this._transposedTable = _.zip(this._table);
+        this._transposedTable = this._table[0].map((col, i) => this._table.map(row => row[i]));
         this._numOfRows = this._table.length;
         this._numOfColumns = this._table[0].length;
         this._rowLabels = {};
         this._columnLabels = {};
+    }
+
+    getNumberOfRows () {
+        return this._numOfRows;
+    }
+
+    getNumberOfColumns () {
+        return this._numOfColumns;
     }
 
     setRowLabel (_label, _index) {
@@ -79,11 +85,11 @@ class TableWrapper {
         return _copy;
     }
 
-    static generateEmptyTable (_numOfRows, _numOfColumns) {
+    static generateEmptyTable (_numOfRows, _numOfColumns, _fillValue = null) {
         const _table = new Array(_numOfRows);
 
         for (let _i = 0, _iMax = _numOfRows; _i < _iMax; _i++) {
-            _table[_i] = new Array(_numOfColumns).fill(null);
+            _table[_i] = new Array(_numOfColumns).fill(_fillValue);
         }
 
         return _table;

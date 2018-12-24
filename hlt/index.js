@@ -1,20 +1,11 @@
-const constants = require('./constants');
-const logging = require('./logging');
+const constants = require('./settings/constants');
+const logging = require('./utils/logging');
 
-const { Entity, Dropoff, Shipyard, Ship } = require('./entity');
-const { Game, Player } = require('./networking');
-const { MapCell, GameMap } = require('./gameMap');
-const { Direction, Position } = require('./positionals');
+const GameInstance = require('./GameInstance');
+const GameMap = require('./map/GameMap');
 
 module.exports = {
-    Direction, Position,
-    Entity,
-    Dropoff,
-    Shipyard,
-    Ship,
-    Game,
-    Player,
-    MapCell,
+    GameInstance,
     GameMap,
     constants,
     logging,

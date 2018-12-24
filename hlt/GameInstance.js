@@ -1,12 +1,17 @@
 const readline = require('readline');
 
-const constants = require('./constants');
-const logging = require('./logging');
-const { GameMap, Player } = require('./gameMap');
+const constants = require('./settings/constants');
+const logging = require('./utils/logging');
+const GameMap = require('./map/GameMap');
+const Player = require('./Player');
 
-class Game {
+class GameInstance {
     constructor() {
         this.turnNumber = 0;
+        this.myId = null;
+        this.players = null;
+        this.me = null;
+        this.gameMap = null;
 
         // Setup input/output
         const rl = readline.createInterface({
@@ -35,6 +40,11 @@ class Game {
             });
         };
         this._getLine = getLine;
+        this._readAndParseLine = this._readAndParseLine.bind(this);
+    }
+
+    async _readAndParseLine () {
+        return (await this._getLine()).split(/\s+/).map(_value => parseInt(_value, 10));
     }
 
     /**
@@ -43,22 +53,29 @@ class Game {
      * "bot-<bot_id>.log".
      */
     async initialize() {
-        const rawConstants = await this._getLine();
-        constants.loadConstants(JSON.parse(rawConstants));
+        constants.loadConstants(JSON.parse(await this._getLine()));
 
-        const [ numPlayers, myId ] = (await this._getLine())
-              .split(/\s+/)
-              .map(tok => parseInt(tok, 10));
+        const [ _numOfPlayers, myId ] = await this._readAndParseLine();
         this.myId = myId;
 
         logging.setup(`bot-${myId}.log`);
 
         this.players = new Map();
-        for (let i = 0; i < numPlayers; i++) {
-            this.players.set(i, await Player._generate(this._getLine));
+
+        for (let i = 0; i < _numOfPlayers; i++) {
+            const [ _playerId, _shipyardX, _shipyardY ] = await this._readAndParseLine();
+
+            const _player = new Player(_playerId).setShipyard(_shipyardX, _shipyardY);
+
+            this.players.set(i, _player);
         }
         this.me = this.players.get(this.myId);
-        this.gameMap = await GameMap._generate(this._getLine);
+
+        this.gameMap = await GameMap._generate(this._readAndParseLine);
+
+        this.players.forEach(_player => {
+            return _player.setGameMap(this.gameMap);
+        });
     }
 
     /** Indicate that your bot is ready to play. */
@@ -74,10 +91,8 @@ class Game {
         logging.info(`================ TURN ${this.turnNumber.toString().padStart(3, '0')} ================`);
 
         for (let i = 0; i < this.players.size; i++) {
-            const [ player, numShips, numDropoffs, halite ] = (await this._getLine())
-                  .split(/\s+/)
-                  .map(x => parseInt(x, 10));
-            await this.players.get(player)._update(numShips, numDropoffs, halite, this._getLine);
+            const [ _playerId, numShips, numDropoffs, halite ] = await this._readAndParseLine();
+            await this.players.get(_playerId)._update(numShips, numDropoffs, halite, this._readAndParseLine);
         }
 
         await this.gameMap._update(this._getLine);
@@ -86,11 +101,11 @@ class Game {
 
         for (const player of this.players.values()) {
             for (const ship of player.getShips()) {
-                this.gameMap.get(ship.position).markUnsafe(ship);
+                this.gameMap.getMapCellByPosition(ship.position).markUnsafe(ship);
             }
-            this.gameMap.get(player.shipyard.position).structure = player.shipyard;
+            this.gameMap.getMapCellByPosition(player.shipyard.position).structure = player.shipyard;
             for (const dropoff of player.getDropoffs()) {
-                this.gameMap.get(dropoff.position).structure = dropoff;
+                this.gameMap.getMapCellByPosition(dropoff.position).structure = dropoff;
             }
         }
     }
@@ -118,8 +133,4 @@ function sendCommands(commands) {
     });
 }
 
-module.exports = {
-    Player,
-    Game,
-    sendCommands,
-};
+module.exports = GameInstance;

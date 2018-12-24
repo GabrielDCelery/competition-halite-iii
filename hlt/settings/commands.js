@@ -1,6 +1,4 @@
-/**
- * All viable commands that can be sent to the engine
- */
+'use strict';
 
 const NORTH = 'n';
 const SOUTH = 's';
