@@ -4,7 +4,7 @@ const constants = require('./settings/constants');
 const logging = require('./utils/logging');
 const GameMap = require('./map/GameMap');
 const Player = require('./Player');
-const GlobalAI = require('./ai/GlobalAI');
+const GlobalAI = require('./ai/GlobalAI_NEW');
 
 class GameInstance {
     constructor() {

@@ -1,6 +1,6 @@
 'use strict';
 
-const AREA_SIZE = 3;
+const AREA_SIZE = 5;
 const SURROUNDING_CELLS = [
     [-1, 0],
     [0, 1],
@@ -53,8 +53,7 @@ class GlobalAI {
                 _table[_y][_x] = {
                     id: null,
                     centerPosition: _tileCenterPosition,
-                    haliteAmount: this._getHaliteAmountInArea(_tileCenterPosition),
-                    pointers: []
+                    haliteAmount: this._getHaliteAmountInArea(_tileCenterPosition)
                 };
 
                 _offsetX += AREA_SIZE;
@@ -66,7 +65,7 @@ class GlobalAI {
         this.areaGrid = _table;
     }
 
-    _createPointersForSurroundingTilesAtDistance (_centerX, _centerY, _distanceToEdge, _distance) {
+    _appendIdsToAreaTilesInSpiral (_centerX, _centerY, _distanceToEdge, _distance) {
         const _overflow = _distance - _distanceToEdge > 0 ? _distance - _distanceToEdge : 0;
 
         if (!_overflow) {
@@ -74,7 +73,7 @@ class GlobalAI {
             let _offsetX = 0;
 
             for (let _i = 0, _iMax = _distance; _i < _iMax; _i++) {
-                this._createPointersToSurroundingTiles(_centerX + _offsetX, _centerY + _offsetY);
+                this._appendIdToTile(_centerX + _offsetX, _centerY + _offsetY);
 
                 _offsetY++;
                 _offsetX++;
@@ -84,7 +83,7 @@ class GlobalAI {
             _offsetX = _distance;
 
             for (let _i = 0, _iMax = _distance; _i < _iMax; _i++) {
-                this._createPointersToSurroundingTiles(_centerX + _offsetX, _centerY + _offsetY);
+                this._appendIdToTile(_centerX + _offsetX, _centerY + _offsetY);
 
                 _offsetY++;
                 _offsetX--;
@@ -94,7 +93,7 @@ class GlobalAI {
             _offsetX = 0;
 
             for (let _i = 0, _iMax = _distance; _i < _iMax; _i++) {
-                this._createPointersToSurroundingTiles(_centerX + _offsetX, _centerY + _offsetY);
+                this._appendIdToTile(_centerX + _offsetX, _centerY + _offsetY);
 
                 _offsetY--;
                 _offsetX--;
@@ -104,7 +103,7 @@ class GlobalAI {
             _offsetX = _distance * (-1);
 
             for (let _i = 0, _iMax = _distance; _i < _iMax; _i++) {
-                this._createPointersToSurroundingTiles(_centerX + _offsetX, _centerY + _offsetY);
+                this._appendIdToTile(_centerX + _offsetX, _centerY + _offsetY);
 
                 _offsetY--;
                 _offsetX++;
@@ -119,7 +118,7 @@ class GlobalAI {
         let _offsetX = 0 + _overflow;
 
         for (let _i = 0, _iMax = _numOfIterations; _i < _iMax; _i++) {
-            this._createPointersToSurroundingTiles(_centerX + _offsetX, _centerY + _offsetY);
+            this._appendIdToTile(_centerX + _offsetX, _centerY + _offsetY);
 
             _offsetY++;
             _offsetX++;
@@ -129,7 +128,7 @@ class GlobalAI {
         _offsetX = _distanceToEdge;
 
         for (let _i = 0, _iMax = _numOfIterations; _i < _iMax; _i++) {
-            this._createPointersToSurroundingTiles(_centerX + _offsetX, _centerY + _offsetY);
+            this._appendIdToTile(_centerX + _offsetX, _centerY + _offsetY);
 
             _offsetY++;
             _offsetX--;
@@ -139,7 +138,7 @@ class GlobalAI {
         _offsetX = 0 - _overflow;
 
         for (let _i = 0, _iMax = _numOfIterations; _i < _iMax; _i++) {
-            this._createPointersToSurroundingTiles(_centerX + _offsetX, _centerY + _offsetY);
+            this._appendIdToTile(_centerX + _offsetX, _centerY + _offsetY);
 
             _offsetY--;
             _offsetX--;
@@ -149,40 +148,25 @@ class GlobalAI {
         _offsetX = _distanceToEdge * (-1);
 
         for (let _i = 0, _iMax = _numOfIterations; _i < _iMax; _i++) {
-            this._createPointersToSurroundingTiles(_centerX + _offsetX, _centerY + _offsetY);
+            this._appendIdToTile(_centerX + _offsetX, _centerY + _offsetY);
 
             _offsetY--;
             _offsetX++;
         }
     }
 
-    _createPointersToSurroundingTiles (_startX, _startY) {
-        const _currentGridTile = this.areaGrid[_startY][_startX];
-
-        SURROUNDING_CELLS.forEach(_offset => {
-            const _offsettedY = _startY + _offset[0];
-            const _offsettedX = _startX + _offset[1];
-
-            if (
-                this.areaGrid[_offsettedY] === undefined || 
-                this.areaGrid[_offsettedY][_offsettedX] === undefined || 
-                this.areaGrid[_offsettedY][_offsettedX].id !== null
-            ) {
-                return;
-            }
-
-            _currentGridTile.pointers.push([_offsettedX, _offsettedY]);
-        });
-
-        _currentGridTile.id = this.cellId;
+    _appendIdToTile (_startX, _startY) {
+        this.areaGrid[_startY][_startX].id = this.cellId;
         this.cellId++;
     }
 
     _getHaliteAmountInArea (_centerPositionOfArea) {
         let _haliteAmount = 0;
 
-        for (let _offsetY  = -1; _offsetY <= 1; _offsetY++) {
-            for (let _offsetX  = -1; _offsetX <= 1; _offsetX++) {
+        const _offset = (AREA_SIZE - 1) / 2;
+
+        for (let _offsetY  = _offset * (-1); _offsetY <= _offset; _offsetY++) {
+            for (let _offsetX  = _offset * (-1); _offsetX <= _offset; _offsetX++) {
                 const _tilePosition = _centerPositionOfArea.add({
                     x: _offsetX,
                     y: _offsetY
@@ -203,14 +187,12 @@ class GlobalAI {
         const _centerPosition = (_size - 1) / 2;
 
         this._initAreaGrid(_size);
-        this._createPointersToSurroundingTiles(_centerPosition, _centerPosition);
+        this._appendIdToTile(_centerPosition, _centerPosition);
 
         for (let _i = 1, _iMax = _size; _i <= _iMax; _i++) {
-            this._createPointersForSurroundingTilesAtDistance(_centerPosition, _centerPosition, _centerPosition, _i);
+            this._appendIdsToAreaTilesInSpiral(_centerPosition, _centerPosition, _centerPosition, _i);
         }
         
-        console.log(JSON.stringify(this.areaGrid))
-
         return this;
     }
 }
