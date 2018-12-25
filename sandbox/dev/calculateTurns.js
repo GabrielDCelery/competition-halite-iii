@@ -1,7 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
-const TableWrapper = require('../utils/TableWrapper');
+const TableWrapper = require('../../utils/TableWrapper');
 const CellHarvestSimulator = require('../analysis/CellHarvestSimulator');
 const CollectionRateAtCellAnalyzer = require('../analysis/CollectionRateAtCellAnalyzer');
 const TurnsToSpendAtCellSuggestor = require('../analysis/TurnsToSpendAtCellSuggestor');

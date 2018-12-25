@@ -1,6 +1,6 @@
 'use strict';
 
-const TableWrapper = require('../utils/TableWrapper');
+const TableWrapper = require('../../utils/TableWrapper');
 
 const CARGO_MAXIMUM_AMOUNT = 1000;
 
