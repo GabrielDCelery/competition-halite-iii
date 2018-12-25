@@ -4,6 +4,7 @@ const constants = require('./settings/constants');
 const logging = require('./utils/logging');
 const GameMap = require('./map/GameMap');
 const Player = require('./Player');
+const GlobalAI = require('./ai/GlobalAI');
 
 class GameInstance {
     constructor() {
@@ -66,6 +67,9 @@ class GameInstance {
             const [ _playerId, _shipyardX, _shipyardY ] = await this._readAndParseLine();
 
             const _player = new Player(_playerId).setShipyard(_shipyardX, _shipyardY);
+            const _playerAI = new GlobalAI().setShipyardPosition(_player.getShipyard().getPosition());
+
+            _player.setAI(_playerAI);
 
             this.players.set(i, _player);
         }
@@ -74,7 +78,7 @@ class GameInstance {
         this.gameMap = await GameMap._generate(this._readAndParseLine);
 
         this.players.forEach(_player => {
-            return _player.setGameMap(this.gameMap);
+            return _player.getAI().setGameMap(this.gameMap).init();
         });
     }
 

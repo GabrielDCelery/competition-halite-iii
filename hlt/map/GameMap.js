@@ -18,6 +18,15 @@ class GameMap {
         this.height = height;
         this._cells = cells;
         this.Direction = Direction;
+        this.normalize = this.normalize.bind(this);
+    }
+
+    getNumberOfRows () {
+        return this.height;
+    }
+
+    getNumberOfColumns () {
+        return this.width;
     }
 
     getMapCellByIndex (_x, _y) {

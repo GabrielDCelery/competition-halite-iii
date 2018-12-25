@@ -6,7 +6,7 @@ class CollectHalite {
     constructor (_validStates, _ship) {
         this.validStates = _validStates;
         this.ship = _ship;
-        this.gameMap = this.ship.getPlayerPublicMethods().getGameMap();
+        this.gameMap = this.ship.getPlayerPublicMethods().getAI().getGameMap();
     }
 
     checkIfNeedsToTransitionToNewState () {

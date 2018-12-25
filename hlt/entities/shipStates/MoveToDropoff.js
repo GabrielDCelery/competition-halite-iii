@@ -7,7 +7,7 @@ class MoveToDropoff {
         this.validStates = _validStates;
         this.ship = _ship;
         this.destination = this.ship.getPlayerPublicMethods().getShipyard().getPosition();
-        this.gameMap = this.ship.getPlayerPublicMethods().getGameMap();
+        this.gameMap = this.ship.getPlayerPublicMethods().getAI().getGameMap();
     }
 
     checkIfNeedsToTransitionToNewState () {

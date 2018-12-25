@@ -19,19 +19,6 @@ gameInstance.initialize().then(async () => {
 
         for (const ship of me.getShips()) {
             commandQueue.push(ship.createCommandForTurn());
-            /*
-            if (ship.haliteAmount > hlt.constants.MAX_HALITE / 2) {
-                const destination = me.shipyard.position;
-                const safeMove = gameMap.naiveNavigate(ship, destination);
-                commandQueue.push(ship.move(safeMove));
-            }
-            else if (gameMap.getMapCellByPosition(ship.position).haliteAmount < hlt.constants.MAX_HALITE / 10) {
-                const direction = gameMap.Direction.getAllCardinals()[Math.floor(4 * Math.random())];
-                const destination = ship.position.directionalOffset(direction);
-                const safeMove = gameMap.naiveNavigate(ship, destination);
-                commandQueue.push(ship.move(safeMove));
-            }
-            */
         }
 
         if (gameInstance.turnNumber < 0.75 * hlt.constants.MAX_TURNS &&

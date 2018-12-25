@@ -13,12 +13,12 @@ class Player {
         this._ships = new Map();
         this._dropoffs = new Map();
         this.gameMap = null;
+        this.ai = null;
 
         this.setShipyard = this.setShipyard.bind(this);
-        this.setGameMap = this.setGameMap.bind(this);
+        this.setAI = this.setAI.bind(this);
         this.getShipyard = this.getShipyard.bind(this);
-        this.getGameMap = this.getGameMap.bind(this);
-        this.initialized = false;
+        this.getAI = this.getAI.bind(this);
     }
 
     setShipyard (_shipyardX, _shipyardY) {
@@ -31,21 +31,21 @@ class Player {
         return this.shipyard;
     }
 
-    setGameMap (_gameMap) {
-        this.gameMap = _gameMap;
-
-        return this;
-    }
-
-    getGameMap () {
-        return this.gameMap;
-    }
-
     getPlayerData () {
         return {
             shipyard: this.shipyard,
             gameMap: this.gameMap
         }
+    }
+
+    setAI (_ai) {
+        this.ai = _ai;
+
+        return this;
+    }
+
+    getAI () {
+        return this.ai;
     }
 
     /** Get a single ship by its ID. */
@@ -99,7 +99,7 @@ class Player {
                 ship = new Ship(this.id, shipId, new Position(xPos, yPos), halite)
                     .setPlayerPublicMethods({
                         getShipyard: this.getShipyard,
-                        getGameMap: this.getGameMap
+                        getAI: this.getAI
                     })
                     .initState();
             }
