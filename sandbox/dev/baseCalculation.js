@@ -1,49 +1,29 @@
-const _ = require('lodash');
-const TableWrapper = require('../../utils/TableWrapper');
-const CellHarvestSimulator = require('../analysis/CellHarvestSimulator');
-const CollectionRateAtCellAnalyzer = require('../analysis/CollectionRateAtCellAnalyzer');
-const TurnsToSpendAtCellSuggestor = require('../analysis/TurnsToSpendAtCellSuggestor');
+'use strict';
 
-const NUM_OF_TURNS_TO_ANALYZE = 25;
-const CARGO_MAXIMUM_AMOUNT = 1000;
-const CELL_MAXIMUM_AMOUNT = 1000;
-const NEAREST_NTH = 10;
+const CollectionRateAtCellAnalyzer = require('../analysis/CollectionRateAtCellAnalyzer_NEW');
+const TurnsToSpendAtCellSuggestor = require('../analysis/TurnsToSpendAtCellSuggestor_NEW');
 
-const createRoundedCollectionRatesTables = function createRoundedCollectionRatesTables (_numOfTurns, _cargoMaximumAmount, _cellMaximumAmount, _nearestNth) {
-    const _tableWrapper = new TableWrapper(TableWrapper.generateEmptyTable(_cargoMaximumAmount / _nearestNth + 1, _cellMaximumAmount / _nearestNth + 1));
-    
-    _.times((_cargoMaximumAmount / _nearestNth) + 1, _i => {
-        _.times((_cellMaximumAmount / _nearestNth) + 1, _j => {
-            const _roundedAmountInCargo = _i * _nearestNth;
-            const _roundedAmountOnCell = _j * _nearestNth;
+const NUM_OF_TURNS = 10;
 
-            const _turnByTurnAnalysis = new CollectionRateAtCellAnalyzer(_numOfTurns).generateTurnByTurnAnalysis(_roundedAmountInCargo, _roundedAmountOnCell);
+const collectionRateAtCellAnalyzer = new CollectionRateAtCellAnalyzer(NUM_OF_TURNS);
 
-            return _tableWrapper.setCellValue(_i, _j, _turnByTurnAnalysis);
-        });
-    });
+const _collectionRatesAtCell = collectionRateAtCellAnalyzer.generateTurnByTurnAnalysis(700, 300);
 
-    return _tableWrapper;
-}
+const turnsToSpendAtCellSuggestor = new TurnsToSpendAtCellSuggestor()
+    .setCollectionRateTable(_collectionRatesAtCell)
+    .setThresholds([{
+        label: 'OVERFLOW_AMOUNT',
+        maxThreshold: 30
+    }, {
+        label: 'CARGO_INCREASE_RATE',
+        minThreshold: 4
+    }, {
+        label: 'TOTAL_LEAVE_COST',
+        maxThreshold: 50
+    }, {
+        label: 'CARGO_WASTE_RATE',
+        maxThreshold: 5
+    }]);
 
-const roundedCollectionRatesTables = createRoundedCollectionRatesTables(NUM_OF_TURNS_TO_ANALYZE, CARGO_MAXIMUM_AMOUNT, CELL_MAXIMUM_AMOUNT, NEAREST_NTH);
-
-const _collectionRateTable = roundedCollectionRatesTables.getCellValue(100, 100);
-
-const turnsToSpendAtCellSuggestor = new TurnsToSpendAtCellSuggestor().setThresholds([{
-    label: CollectionRateAtCellAnalyzer.COLUMN_LABELS.CAN_LEAVE,
-    minThreshold: true
-}, {
-    label: CollectionRateAtCellAnalyzer.COLUMN_LABELS.CARGO_INCREASE_RATE,
-    minThreshold: 5
-}, {
-    label: CollectionRateAtCellAnalyzer.COLUMN_LABELS.LEAVE_COST,
-    maxThreshold: 30
-}, {
-    label: CollectionRateAtCellAnalyzer.COLUMN_LABELS.CARGO_AMOUNT_WASTED,
-    maxThreshold: 5
-}]);
-
-turnsToSpendAtCellSuggestor.setCollectionRateTable(_collectionRateTable);
-
+console.log(_collectionRatesAtCell)
 console.log(turnsToSpendAtCellSuggestor.suggest())
