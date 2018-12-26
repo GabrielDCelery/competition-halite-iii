@@ -4,8 +4,8 @@ const constants = require('./settings/constants');
 const logging = require('./utils/logging');
 const GameMap = require('./map/GameMap');
 const Player = require('./Player');
-const GlobalAI = require('./ai/GlobalAI_NEW');
-
+const GlobalAI = require('./ai/GlobalAI');
+let _original = null;
 class GameInstance {
     constructor() {
         this.turnNumber = 0;
@@ -75,11 +75,19 @@ class GameInstance {
         }
         this.me = this.players.get(this.myId);
 
-        this.gameMap = await GameMap._generate(this._readAndParseLine);
+        const [ _mapWidth, _mapHeight ] = await this._readAndParseLine();
+        const _gameMap = GameMap.create2DMatrix(_mapWidth, _mapHeight);
 
-        this.players.forEach(_player => {
-            return _player.getAI().setGameMap(this.gameMap).init();
-        });
+        for (let _y = 0; _y < _mapHeight; _y++) {
+            const _cells = await this._readAndParseLine();
+
+            for (let _x = 0; _x < _mapWidth; _x++) {
+                _gameMap[_y][_x] = GameMap.createMapCell(_x, _y, _cells[_x]);
+            }
+        }
+
+        this.gameMap = new GameMap(_gameMap, _mapWidth, _mapHeight);
+        this.me.getAI().setGameMap(this.gameMap).init();
     }
 
     /** Indicate that your bot is ready to play. */
@@ -99,11 +107,27 @@ class GameInstance {
             await this.players.get(_playerId)._update(numShips, numDropoffs, halite, this._readAndParseLine);
         }
 
-        await this.gameMap._update(this._getLine);
+        this.me.getAI().resetEnemyShipDistribution();
+        this.gameMap.resetShipsOnMap();
+
+        const _numChangedCells = parseInt(await this._getLine(), 10);
+
+        for (let i = 0; i < _numChangedCells; i++) {
+            const [ _cellX, _cellY, _cellEnergy ] = await this._readAndParseLine();
+
+            this.me.getAI().updateHaliteForAreaBeforeMapCellUpdate(_cellX, _cellY, _cellEnergy);
+            this.gameMap.updateTileHaliteAmount(_cellX, _cellY, _cellEnergy);
+        }
 
         // Mark cells with ships as unsafe for navigation
 
         for (const player of this.players.values()) {
+            if (player.id !== this.myId) {
+                for (const ship of player.getShips()) {
+                    this.me.getAI().increaseEnemyNumberOfShipsInArea(ship.position);
+                }
+            }
+
             for (const ship of player.getShips()) {
                 this.gameMap.getMapCellByPosition(ship.position).markUnsafe(ship);
             }

@@ -2,11 +2,11 @@
 
 const constants = require('../../settings/constants');
 
-class MoveToArea {
+class CollectHaliteInArea {
     constructor (_validStates, _ship) {
         this.validStates = _validStates;
         this.ship = _ship;
-        this.playerAI = this.ship.getPlayerPublicMethods().getAI();
+        this.gameMap = this.ship.getPlayerPublicMethods().getAI().getGameMap();
     }
 
     checkIfNeedsToTransitionToNewState () {
@@ -16,4 +16,4 @@ class MoveToArea {
     }
 }
 
-module.exports = MoveToArea;
+module.exports = CollectHaliteInArea;

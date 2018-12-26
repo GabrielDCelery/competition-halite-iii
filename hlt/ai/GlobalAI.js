@@ -1,20 +1,20 @@
 'use strict';
 
-const AREA_SIZE = 3;
-const SURROUNDING_CELLS = [
-    [-1, 0],
-    [0, 1],
-    [1, 0],
-    [0, -1]
-];
+const AREA_SIZE = 4;
 
 class GlobalAI {
     constructor() {
         this.setGameMap = this.setGameMap.bind(this);
         this.getGameMap = this.getGameMap.bind(this);
         this.areaGrid = null;
-        this.shipyardX = null;
-        this.syhipyardY = null;
+        this.numOfAreas = null;
+        this.mapCellsToAreasMap = {};
+        this.state = {
+            haliteAmounts: null,
+            distances: null,
+            numOfEnemyShips: null,
+            numOfAlliedShipsSentToHarvest: null
+        }
     }
 
     getGameMap (_gameMap) {
@@ -33,185 +33,95 @@ class GlobalAI {
         return this;
     }
 
-    _initAreaGrid (_size) {
-        const _table = new Array(_size);
-        const _offset = (_size - 1) / 2;
+    _initEmptyMapTilesToAreasMap (_width, _height) {
+        const _map = new Array(_height);
 
-        let _offsetY = _offset * (-1) * AREA_SIZE;
+        for (let _y = 0, _yMax = _height; _y < _yMax; _y++)  {
+            _map[_y] = new Array(_width);
 
-        for (let _y = 0, _yMax = _size; _y < _yMax; _y++) {
-            _table[_y] = new Array(_size);
-
-            let _offsetX = _offset * (-1) * AREA_SIZE;
-
-            for (let _x = 0, _xMax = _size; _x < _xMax; _x++) {
-                const _tileCenterPosition = this.gameMap.normalize(this.shipyardPosition.add({
-                    x: _offsetX,
-                    y: _offsetY
-                }));
-
-                _table[_y][_x] = {
-                    id: null,
-                    centerPosition: _tileCenterPosition,
-                    haliteAmount: this._getHaliteAmountInArea(_tileCenterPosition),
-                    pointers: []
-                };
-
-                _offsetX += AREA_SIZE;
+            for (let _x = 0, _xMax = _width; _x < _xMax; _x++) {
+                _map[_y][_x] = null;
             }
-
-            _offsetY += AREA_SIZE;
         }
 
-        this.areaGrid = _table;
+        this.mapCellsToAreasMap = _map;
     }
 
-    _createPointersForSurroundingTilesAtDistance (_centerX, _centerY, _distanceToEdge, _distance) {
-        const _overflow = _distance - _distanceToEdge > 0 ? _distance - _distanceToEdge : 0;
+    _initAreaGrid (_width, _height) {
+        const _numOfAreasInRow = _width / AREA_SIZE;
+        const _numOfAreasInColumn = _height / AREA_SIZE;
 
-        if (!_overflow) {
-            let _offsetY = _distance * (-1);
-            let _offsetX = 0;
+        this.numOfAreas = _numOfAreasInRow * _numOfAreasInColumn;
 
-            for (let _i = 0, _iMax = _distance; _i < _iMax; _i++) {
-                this._createPointersToSurroundingTiles(_centerX + _offsetX, _centerY + _offsetY);
+        this.state.haliteAmounts = new Array(this.numOfAreas).fill(0);
+        this.state.numOfEnemyShips = new Array(this.numOfAreas).fill(0);
+        this.state.numOfAlliedShipsSentToHarvest = new Array(this.numOfAreas).fill(0);
+        this.state.distances = new Array(this.numOfAreas).fill(null);
 
-                _offsetY++;
-                _offsetX++;
+        const _areasPositions = [...new Array(this.numOfAreas)].map(() => { return []})
+
+        for (let _y = 0, _yMax = _height; _y < _yMax; _y++) {
+            for (let _x = 0, _xMax = _width; _x < _xMax; _x++) {
+                const _areaId = Math.floor(_x / AREA_SIZE) + Math.floor(_y / AREA_SIZE) * _numOfAreasInRow;
+
+                this.mapCellsToAreasMap[_y][_x] = _areaId;
+
+                const _mapCell = this.gameMap.getMapCellByIndex(_x, _y);
+
+                this.state.haliteAmounts[_areaId] += _mapCell.getHaliteAmount();
+
+                _areasPositions[_areaId].push(_mapCell.getPosition());
             }
-
-            _offsetY = 0;
-            _offsetX = _distance;
-
-            for (let _i = 0, _iMax = _distance; _i < _iMax; _i++) {
-                this._createPointersToSurroundingTiles(_centerX + _offsetX, _centerY + _offsetY);
-
-                _offsetY++;
-                _offsetX--;
-            }
-
-            _offsetY = _distance;
-            _offsetX = 0;
-
-            for (let _i = 0, _iMax = _distance; _i < _iMax; _i++) {
-                this._createPointersToSurroundingTiles(_centerX + _offsetX, _centerY + _offsetY);
-
-                _offsetY--;
-                _offsetX--;
-            }
-
-            _offsetY = 0;
-            _offsetX = _distance * (-1);
-
-            for (let _i = 0, _iMax = _distance; _i < _iMax; _i++) {
-                this._createPointersToSurroundingTiles(_centerX + _offsetX, _centerY + _offsetY);
-
-                _offsetY--;
-                _offsetX++;
-            }
-
-            return;
         }
 
-        const _numOfIterations = (_distanceToEdge * 2) - _distance + 1;
+        this.state.distances = _areasPositions.map(_areaPositions => {
+            const _areaCenterPosition = this.gameMap.calculateCenterPosition(_areaPositions);
 
-        let _offsetY = _distanceToEdge * (-1);
-        let _offsetX = 0 + _overflow;
-
-        for (let _i = 0, _iMax = _numOfIterations; _i < _iMax; _i++) {
-            this._createPointersToSurroundingTiles(_centerX + _offsetX, _centerY + _offsetY);
-
-            _offsetY++;
-            _offsetX++;
-        }
-
-        _offsetY = 0 + _overflow;
-        _offsetX = _distanceToEdge;
-
-        for (let _i = 0, _iMax = _numOfIterations; _i < _iMax; _i++) {
-            this._createPointersToSurroundingTiles(_centerX + _offsetX, _centerY + _offsetY);
-
-            _offsetY++;
-            _offsetX--;
-        }
-
-        _offsetY = _distanceToEdge;
-        _offsetX = 0 - _overflow;
-
-        for (let _i = 0, _iMax = _numOfIterations; _i < _iMax; _i++) {
-            this._createPointersToSurroundingTiles(_centerX + _offsetX, _centerY + _offsetY);
-
-            _offsetY--;
-            _offsetX--;
-        }
-
-        _offsetY = 0 - _overflow;
-        _offsetX = _distanceToEdge * (-1);
-
-        for (let _i = 0, _iMax = _numOfIterations; _i < _iMax; _i++) {
-            this._createPointersToSurroundingTiles(_centerX + _offsetX, _centerY + _offsetY);
-
-            _offsetY--;
-            _offsetX++;
-        }
-    }
-
-    _createPointersToSurroundingTiles (_startX, _startY) {
-        const _currentGridTile = this.areaGrid[_startY][_startX];
-
-        SURROUNDING_CELLS.forEach(_offset => {
-            const _offsettedY = _startY + _offset[0];
-            const _offsettedX = _startX + _offset[1];
-
-            if (
-                this.areaGrid[_offsettedY] === undefined || 
-                this.areaGrid[_offsettedY][_offsettedX] === undefined || 
-                this.areaGrid[_offsettedY][_offsettedX].id !== null
-            ) {
-                return;
-            }
-
-            _currentGridTile.pointers.push([_offsettedX, _offsettedY]);
+            return this.gameMap.calculateManhattanDistance(_areaCenterPosition, this.shipyardPosition);
         });
-
-        _currentGridTile.id = this.cellId;
-        this.cellId++;
-    }
-
-    _getHaliteAmountInArea (_centerPositionOfArea) {
-        let _haliteAmount = 0;
-
-        for (let _offsetY  = -1; _offsetY <= 1; _offsetY++) {
-            for (let _offsetX  = -1; _offsetX <= 1; _offsetX++) {
-                const _tilePosition = _centerPositionOfArea.add({
-                    x: _offsetX,
-                    y: _offsetY
-                });
-
-                _haliteAmount += this.gameMap.getMapCellByPosition(_tilePosition).getHaliteAmount();
-            }
-        }
-
-        return _haliteAmount;
     }
 
     init () {
-        this.cellId = 0;
+        const _height = this.gameMap.getMapHeight();
+        const _width = this.gameMap.getMapWidth();
 
-        const _rows = this.gameMap.getNumberOfRows();
-        const _size = Math.floor((Math.floor((_rows - AREA_SIZE) / AREA_SIZE)) / 2) * 2 + 1;
-        const _centerPosition = (_size - 1) / 2;
-
-        this._initAreaGrid(_size);
-        this._createPointersToSurroundingTiles(_centerPosition, _centerPosition);
-
-        for (let _i = 1, _iMax = _size; _i <= _iMax; _i++) {
-            this._createPointersForSurroundingTilesAtDistance(_centerPosition, _centerPosition, _centerPosition, _i);
-        }
-        
-        console.log(JSON.stringify(this.areaGrid))
+        this._initEmptyMapTilesToAreasMap (_width, _height);
+        this._initAreaGrid(_width, _height);
 
         return this;
+    }
+
+    updateHaliteForAreaBeforeMapCellUpdate (_cellX, _cellY, _newValue) {
+        const _mapCell = this.gameMap.getMapCellByIndex(_cellX, _cellY);
+        const _diff = _mapCell.getHaliteAmount() - _newValue;
+        const _areaId = this.mapCellsToAreasMap[_cellY][_cellX];
+
+        this.state.haliteAmounts[_areaId] = this.state.haliteAmounts[_areaId] - _diff;
+    }
+
+    increaseEnemyNumberOfShipsInArea (_position) {
+        const _areaId = this.mapCellsToAreasMap[_position.y][_position.x];
+
+        this.state.numOfEnemyShips[_areaId]++;
+    }
+
+    resetEnemyShipDistribution () {
+        this.state.numOfEnemyShips = new Array(this.numOfAreas).fill(0);
+    }
+
+    static normalizeDataArray (_values) {
+        const _minValue = Math.min(..._values);
+        const _maxValue = Math.max(..._values);
+
+        const _diff = _maxValue - _minValue;
+
+        if (_diff === 0) {
+            return _values;
+        }
+
+        return _values.map(_value => {
+            return parseFloat(((_value - _minValue) / _diff).toFixed(2));
+        });
     }
 }
 

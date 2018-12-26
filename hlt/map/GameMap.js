@@ -19,13 +19,17 @@ class GameMap {
         this._cells = cells;
         this.Direction = Direction;
         this.normalize = this.normalize.bind(this);
+        this.getMapCellByIndex = this.getMapCellByIndex.bind(this);
+        this.getMapCellByPosition = this.getMapCellByPosition.bind(this);
+        this.calculateManhattanDistance = this.calculateManhattanDistance.bind(this);
+        this.calculateCenterPosition = this.calculateCenterPosition.bind(this);
     }
 
-    getNumberOfRows () {
+    getMapHeight () {
         return this.height;
     }
 
-    getNumberOfColumns () {
+    getMapWidth () {
         return this.width;
     }
 
@@ -39,10 +43,24 @@ class GameMap {
         return this._cells[_normalizedPositionObj.y][_normalizedPositionObj.x];
     }
 
-    calculateManhattanDistance(_source, _target) {
-        const _delta = this.normalize(_source).sub(this.normalize(_target)).abs();
+    calculateManhattanDistance(_sourcePosition, _targetPosition) {
+        const _delta = this.normalize(_sourcePosition).sub(this.normalize(_targetPosition)).abs();
 
         return Math.min(_delta.x, this.width - _delta.x) + Math.min(_delta.y, this.height - _delta.y);
+    }
+
+    calculateCenterPosition (_positions) {
+        const _numOfPositions = _positions.length;
+
+        let _sumX = 0;
+        let _sumY = 0;
+
+        _positions.map(_position => {
+            _sumX += _position.x;
+            _sumY += _position.y;
+        });
+
+        return new Position(_sumX / _numOfPositions, _sumY / _numOfPositions);
     }
 
     /**
@@ -134,43 +152,24 @@ class GameMap {
         return Direction.Still;
     }
 
-    static async _generate(_readAndParseLine) {
-        const [ mapWidth, mapHeight ] = await _readAndParseLine();
-
-        const gameMap = TableWrapper.generateEmptyTable (mapHeight, mapWidth);
-
-        for (let y = 0; y < mapHeight; y++) {
-            const cells = await _readAndParseLine();
-
-            for (let x = 0; x < mapWidth; x++) {
-                gameMap[y][x] = new MapCell(new Position(x, y), cells[x]);
-            }
-        }
-
-        return new GameMap(gameMap, mapWidth, mapHeight);
-    }
-
-    /**
-     * Update this map object from the input given by the game
-     * engine.
-     */
-    async _update(getLine) {
-        // Mark cells as safe for navigation (re-mark unsafe cells
-        // later)
+    resetShipsOnMap () {
         for (let y = 0; y < this.height; y++) {
             for (let x = 0; x < this.width; x++) {
                 this.getMapCellByIndex(x, y).ship = null;
             }
         }
+    }
 
-        const numChangedCells = parseInt(await getLine(), 10);
-        for (let i = 0; i < numChangedCells; i++) {
-            const line = (await getLine());
-            const [ cellX, cellY, cellEnergy ] = line
-                  .split(/\s+/)
-                  .map(x => parseInt(x, 10));
-            this.getMapCellByIndex(cellX, cellY).haliteAmount = cellEnergy;
-        }
+    updateTileHaliteAmount (_cellX, _cellY, _haliteAmount) {
+        return this.getMapCellByIndex(_cellX, _cellY).haliteAmount = _haliteAmount;
+    }
+
+    static createMapCell(_x, _y, _haliteAmount) {
+        return new MapCell(new Position(_x, _y), _haliteAmount);
+    }
+
+    static create2DMatrix (_mapWidth, _mapHeight) {
+        return TableWrapper.generateEmptyTable (_mapHeight, _mapWidth);
     }
 }
 

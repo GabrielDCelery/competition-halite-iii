@@ -68,7 +68,11 @@ class TurnsToSpendAtCellSuggestor {
         const _minRecommendedTurns = [];
         const _maxAllowedTurns = [];
 
-        this._thresholdConfigs.forEach(_config => {
+        this._thresholdConfigs.forEach((_config, _index) => {
+            if (_index === 0) {
+                return;
+            }
+
             const _cellValues = this._collectionRateTable.getColumnByLabel(_config.label);
             const _firstElem = _cellValues[0] < 0 ? _cellValues[1] : _cellValues[0];
             const _bIsArrayIncreasing = _firstElem <= _cellValues[_cellValues.length - 1];

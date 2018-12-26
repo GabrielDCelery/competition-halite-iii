@@ -9,6 +9,10 @@ class MapCell {
         this.structure = null;
     }
 
+    getPosition () {
+        return this.position;
+    }
+
     getHaliteAmount () {
         return this.haliteAmount;
     }
