@@ -15,7 +15,8 @@ class CollectionRateAtCellAnalyzer {
             TOTAL_LEAVE_COST: 7,
             AMOUNT_IN_CARGO_AFTER_LEAVE: 8,
             CARGO_WASTE_RATE: 9,
-            CARGO_INCREASE_RATE: 10
+            CARGO_INCREASE_RATE: 10,
+            HALITE_PER_TURN: 11
         };
         this._numOfTurnsToAnalyze = _numOfTurnsToAnalyze;
         
@@ -70,7 +71,7 @@ class CollectionRateAtCellAnalyzer {
     }
 
     _calculateCargoWasteRate (_totalLeaveCost, _amountInCargoAtTurnEnd) {
-        return _amountInCargoAtTurnEnd === 0 ? 0 : parseFloat((_totalLeaveCost / _amountInCargoAtTurnEnd * 100).toFixed(1));
+        return parseFloat((_totalLeaveCost / _amountInCargoAtTurnEnd * 100).toFixed(1));
     }
 
     _calculateCargoIncreaseRate (_amountInCargoAfterLeave, _amountInCargoAtTurnStart) {
@@ -78,7 +79,11 @@ class CollectionRateAtCellAnalyzer {
             return 0;
         }
 
-        return _amountInCargoAtTurnStart === 0 ? 0 : parseFloat(((_amountInCargoAfterLeave - _amountInCargoAtTurnStart) / _amountInCargoAtTurnStart * 100).toFixed(1));
+        return parseFloat(((_amountInCargoAfterLeave - _amountInCargoAtTurnStart) / _amountInCargoAtTurnStart * 100).toFixed(1));
+    }
+
+    _calculateHalitePerTurn (_amountInCargoAtFirstTurnStart, _amountInCargoAfterLeave, _turn) {
+        return parseFloat(((_amountInCargoAfterLeave - _amountInCargoAtFirstTurnStart) / (_turn + 1)).toFixed(1));
     }
 
     _generateRow (_turn, _amountInCargoAtFirstTurnStart, _amountOnCellAtFirstTurnStart) {
@@ -94,7 +99,8 @@ class CollectionRateAtCellAnalyzer {
         const _totalLeaveCost = this._calculateTotalLeaveCost(_amountOnCellAtTurnEnd);
         const _amountInCargoAfterLeave = this._calculateAmountInCargoAfterLeave (_amountInCargoAtTurnEnd,  _totalLeaveCost);
         const _cargoWasteRate = this._calculateCargoWasteRate (_totalLeaveCost, _amountInCargoAtTurnEnd);
-        const _cargoIncreaseRate = this._calculateCargoIncreaseRate (_amountInCargoAfterLeave, _amountInCargoAtTurnStart)
+        const _cargoIncreaseRate = this._calculateCargoIncreaseRate (_amountInCargoAfterLeave, _amountInCargoAtTurnStart);
+        const _halitePerTurn = this._calculateHalitePerTurn (_amountInCargoAtFirstTurnStart, _amountInCargoAfterLeave, _turn);
 
         this._table[_turn][this.COLUMN_LABELS.AMOUNT_IN_CARGO_AT_TURN_START] = _amountInCargoAtTurnStart;
         this._table[_turn][this.COLUMN_LABELS.AMOUNT_ON_CELL_AT_TURN_START] = _amountOnCellAtTurnStart;
@@ -107,6 +113,7 @@ class CollectionRateAtCellAnalyzer {
         this._table[_turn][this.COLUMN_LABELS.AMOUNT_IN_CARGO_AFTER_LEAVE] = _amountInCargoAfterLeave;
         this._table[_turn][this.COLUMN_LABELS.CARGO_WASTE_RATE] = _cargoWasteRate;
         this._table[_turn][this.COLUMN_LABELS.CARGO_INCREASE_RATE] = _cargoIncreaseRate;
+        this._table[_turn][this.COLUMN_LABELS.HALITE_PER_TURN] = _halitePerTurn;
     }
 
     generateTurnByTurnAnalysis (_amountInCargoAtTurnStart, _amountOnCellAtTurnStart) {
@@ -123,7 +130,8 @@ class CollectionRateAtCellAnalyzer {
             OVERFLOW_AMOUNT: _transposedTable[this.COLUMN_LABELS.OVERFLOW_AMOUNT],
             TOTAL_LEAVE_COST: _transposedTable[this.COLUMN_LABELS.TOTAL_LEAVE_COST],
             CARGO_WASTE_RATE: _transposedTable[this.COLUMN_LABELS.CARGO_WASTE_RATE],
-            CARGO_INCREASE_RATE: _transposedTable[this.COLUMN_LABELS.CARGO_INCREASE_RATE]
+            CARGO_INCREASE_RATE: _transposedTable[this.COLUMN_LABELS.CARGO_INCREASE_RATE],
+            HALITE_PER_TURN: _transposedTable[this.COLUMN_LABELS.HALITE_PER_TURN]
         };
     }
 }
