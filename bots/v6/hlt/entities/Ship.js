@@ -11,7 +11,6 @@ class Ship extends GameEntity {
     constructor(_owner, _id, _position, _haliteAmount) {
         super(_owner, _id, _position);
         this.haliteAmount = _haliteAmount;
-        this.toggleCommandCreatedForTurn = this.toggleCommandCreatedForTurn.bind(this);
     }
 
     setHaliteAmountInCargo (_haliteAmount) {
@@ -24,20 +23,6 @@ class Ship extends GameEntity {
         this.state = new ShipStateFactory(this);
 
         return this;
-    }
-
-    callMethodOnState (_methodname, _argumentsArray) {
-        return this.state.callMethodOnState(_methodname, _argumentsArray);
-    }
-
-    toggleCommandCreatedForTurn (_boolean) {
-        this.state.toggleCommandCreatedForTurn(_boolean);
-
-        return this;
-    }
-
-    createCommandForTurn() {
-        return this.state.createCommandForTurn();
     }
 
     /** Is this ship at max halite capacity? */
@@ -64,7 +49,6 @@ class Ship extends GameEntity {
         if (direction.toWireFormat) {
             direction = direction.toWireFormat();
         }
-
         return `${commands.MOVE} ${this.id} ${direction}`;
     }
 
@@ -75,6 +59,10 @@ class Ship extends GameEntity {
      */
     stayStill() {
         return `${commands.MOVE} ${this.id} ${commands.STAY_STILL}`;
+    }
+
+    createCommandForTurn() {
+        return this.state.createCommandForTurn();
     }
 
     toString() {

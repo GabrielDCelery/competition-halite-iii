@@ -156,22 +156,19 @@ class GameMap {
         const _shipPosition = _ship.getPosition();
 
         const _choices = [];
-        const _unsafeMoves = this.getUnsafeMoves(_shipPosition, _destination);
 
-        _unsafeMoves.forEach(_direction => {
+        this.getUnsafeMoves(_shipPosition, _destination).forEach(_direction => {
             const _targetPosition = _shipPosition.directionalOffset(_direction);
             const _mapCell = this.getMapCellByPosition(_targetPosition);
-            const _shipOnCell = _mapCell.getShip();
 
-            if (_shipOnCell) {
+            if (_mapCell.isOccupied) {
                 return;
             }
 
             _choices.push({
                 mapCell: _mapCell,
                 direction: _direction,
-                halite: _mapCell.getHaliteAmount(),
-                friendlyShipOnCell: null
+                halite: _mapCell.getHaliteAmount()
             });
         });
 
@@ -180,7 +177,6 @@ class GameMap {
         }
 
         if (_choices.length === 1) {
-            this.getMapCellByPosition(_shipPosition).markSafe();
             _choices[0].mapCell.markUnsafe(_ship);
 
             return _choices[0].direction;
@@ -188,53 +184,9 @@ class GameMap {
 
         const _chosen = _choices[0].halite <= _choices[1].halite ? _choices[0] : _choices[1];
         
-        this.getMapCellByPosition(_shipPosition).markSafe();
         _chosen.mapCell.markUnsafe(_ship);
 
         return _chosen.direction;
-    }
-
-    getAnalyzedListOfChoicesTowardsDestination (_ship, _destination) {
-        const _shipPosition = _ship.getPosition();
-
-        const _choices = [];
-        const _unsafeMoves = this.getUnsafeMoves(_shipPosition, _destination);
-
-        _unsafeMoves.forEach(_direction => {
-            const _targetPosition = _shipPosition.directionalOffset(_direction);
-            const _mapCell = this.getMapCellByPosition(_targetPosition);
-
-            const _shipOnCell = _mapCell.getShip();
-
-            if (_shipOnCell) {
-                if (_shipOnCell.getOwner() === _ship.getOwner()) {
-                    return _choices.push({
-                        mapCell: _mapCell,
-                        direction: _direction,
-                        halite: _mapCell.getHaliteAmount(),
-                        friendlyShipOnCell: _shipOnCell
-                    });
-                }
-
-                return;
-            }
-
-            _choices.push({
-                mapCell: _mapCell,
-                direction: _direction,
-                halite: _mapCell.getHaliteAmount(),
-                friendlyShipOnCell: null
-            });
-        });
-        
-        return _choices.sort(GameMap.sortByProperty('halite'));
-    }
-
-    useChosenMove(_ship, _chosen) {
-        this.getMapCellByPosition(_ship.getPosition()).markSafe();
-        _chosen.mapCell.markUnsafe(_ship);
-        
-        return _ship.move(_chosen.direction);
     }
 
     kamiKazeNavigate (_ship, _destination) {
@@ -258,34 +210,12 @@ class GameMap {
         return this.getMapCellByIndex(_cellX, _cellY).haliteAmount = _haliteAmount;
     }
 
-    getPositionToSouth (_position) {
-        return this.normalize(_position.directionalOffset(Direction.South));
-    }
-
-    getPositionToNorth (_position) {
-        return this.normalize(_position.directionalOffset(Direction.North));
-    }
-
     static createMapCell(_x, _y, _haliteAmount) {
         return new MapCell(new Position(_x, _y), _haliteAmount);
     }
 
     static create2DMatrix (_mapWidth, _mapHeight) {
         return TableWrapper.generateEmptyTable (_mapHeight, _mapWidth);
-    }
-
-    static sortByProperty (_property) {
-        return function compare(a,b) {
-            if (a[_property] < b[_property]) {
-                return -1;
-            }
-
-            if (a[_property] > b[_property]) {
-                return 1;
-            }
-
-            return 0;
-        }
     }
 }
 

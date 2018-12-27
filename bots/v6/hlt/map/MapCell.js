@@ -17,10 +17,6 @@ class MapCell {
         return this.haliteAmount;
     }
 
-    getShip() {
-        return this.ship || null;
-    }
-
     /**
      * @returns {Boolean} whether this cell has no ships or structures.
      */
@@ -61,10 +57,6 @@ class MapCell {
      */
     markUnsafe(ship) {
         this.ship = ship;
-    }
-
-    markSafe () {
-        this.ship = null;
     }
 
     equals(other) {

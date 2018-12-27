@@ -6,16 +6,33 @@ class CollectHalite {
     constructor (_validStates, _ship) {
         this.validStates = _validStates;
         this.ship = _ship;
+        this.commandCreatedForTurn = false;
+        this.toggleCommandCreatedForTurn = this.toggleCommandCreatedForTurn.bind(this);
         this._init();
+    }
+
+    toggleCommandCreatedForTurn (_boolean) {
+        this.commandCreatedForTurn = _boolean;
+
+        return this;
     }
 
     _init () {
         this.playerAI = this.ship.getPlayerPublicMethods().getAI();
         this.gameMap = this.playerAI.getGameMap();
+        this.areaId = this.playerAI.getAreaIdForPosition(this.ship.getPosition());
+        this.previouslyVisitedCell = {
+            x: null,
+            y: null
+        };
+        this.worthAmount = this.playerAI.getHaliteAmountPerCellInArea(this.areaId) * 0.5;
+        this.numOfTurnsSpentAtWanderingInArea = 0;
     }
 
     checkIfNeedsToTransitionToNewState () {
-        if (constants.MAX_HALITE * 0.8 < this.ship.getHaliteInCargo()) {
+        if (this.numOfTurnsSpentAtWanderingInArea > 6 || constants.MAX_HALITE * 0.8 < this.ship.getHaliteInCargo()) {
+            this.playerAI.decreaseNumOfAlliedShipsInArea(this.ship.getId());
+
             return this.validStates.MoveToDropoff;
         }
 
@@ -28,9 +45,10 @@ class CollectHalite {
         const _haliteInShipCargo = this.ship.getHaliteInCargo();
 
         const _isOnShipyard = _haliteOnTile === 0 && _haliteInShipCargo === 0;
-        const _worthToStayingOnTile = constants.MAX_HALITE / 10 < _haliteOnTile;
+        //const _worthToStayOnTile = constants.MAX_HALITE / 10 < _haliteOnTile;
+        const _worthToStayOnTile = this.worthAmount <= _haliteOnTile || constants.MAX_HALITE / 10 < _haliteOnTile;
 
-        if (!_isOnShipyard && _worthToStayingOnTile) {
+        if (!_isOnShipyard && _worthToStayOnTile) {
             return this.ship.stayStill();
         }
 
@@ -44,6 +62,18 @@ class CollectHalite {
         const _choices = [];
 
         _positionOptions.map(_positionOption => {
+            const _bIsInArea = this.playerAI.getAreaIdForPosition(_positionOption) === this.areaId;
+
+            if (!_bIsInArea) {
+                return;
+            }
+
+            const _bVisitedAtPreviousTurn = _positionOption.equals(this.previouslyVisitedCell);
+
+            if (_bVisitedAtPreviousTurn) {
+                return;
+            }
+
             const _mapCell = this.gameMap.getMapCellByPosition(_positionOption);
 
             if (!_mapCell.isEmpty) {
@@ -57,6 +87,11 @@ class CollectHalite {
         });
 
         if (_choices.length === 0) {
+            this.previouslyVisitedCell = {
+                x: null,
+                y: null
+            };
+
             return this.ship.stayStill();
         }
 
@@ -71,6 +106,13 @@ class CollectHalite {
                 _chosen.position = _choice.position;
             }
         });
+
+        this.previouslyVisitedCell = {
+            x: _shipPosition.x,
+            y: _shipPosition.y
+        };
+
+        this.numOfTurnsSpentAtWanderingInArea++;
 
         const _safeMove = this.gameMap.kamiKazeNavigate(this.ship, _chosen.position);
 

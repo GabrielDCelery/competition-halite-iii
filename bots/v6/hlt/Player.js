@@ -14,27 +14,11 @@ class Player {
         this._dropoffs = new Map();
         this.gameMap = null;
         this.ai = null;
-        this.commandQueue = [];
 
         this.setShipyard = this.setShipyard.bind(this);
         this.setAI = this.setAI.bind(this);
         this.getShipyard = this.getShipyard.bind(this);
         this.getAI = this.getAI.bind(this);
-        this.pushCommandToQueue = this.pushCommandToQueue.bind(this);
-    }
-
-    getCommandQueue () {
-        return this.commandQueue;
-    }
-
-    pushCommandToQueue (_command) {
-        this.commandQueue.push(_command);
-    }
-
-    resetCommandQueue () {
-        this.commandQueue = [];
-
-        return this;
     }
 
     setShipyard (_shipyardX, _shipyardY) {
@@ -117,17 +101,12 @@ class Player {
                 if (_bIsMe) {
                     ship.setPlayerPublicMethods({
                         getShipyard: this.getShipyard,
-                        getAI: this.getAI,
-                        pushCommandToQueue: this.pushCommandToQueue
+                        getAI: this.getAI
                     }).initState();
                 }
             }
 
             ship.setPosition(new Position(xPos, yPos)).setHaliteAmountInCargo(halite);
-
-            if (_bIsMe) {
-                ship.toggleCommandCreatedForTurn(false);
-            }
 
             _newShipMap.set(shipId, ship);
         }

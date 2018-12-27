@@ -6,7 +6,7 @@ gameInstance.initialize().then(async () => {
     // At this point "game" variable is populated with initial map data.
     // This is a good place to do computationally expensive start-up pre-processing.
     // As soon as you call "ready" function below, the 2 second per turn timer will start.
-    await gameInstance.ready('Lancelot');
+    await gameInstance.ready('gabrieldceleryv6');
 
     logging.info(`My Player ID is ${gameInstance.myId}.`);
 
@@ -15,22 +15,18 @@ gameInstance.initialize().then(async () => {
 
         const { gameMap, me } = gameInstance;
 
-        me.resetCommandQueue();
+        const commandQueue = [];
 
         for (const ship of me.getShips()) {
-            const _command = ship.createCommandForTurn();
-
-            if (_command) {
-                me.pushCommandToQueue(_command)
-            }
+            commandQueue.push(ship.createCommandForTurn());
         }
 
         if (gameInstance.turnNumber < 0.75 * hlt.constants.MAX_TURNS &&
             me.haliteAmount >= hlt.constants.SHIP_COST &&
             !gameMap.getMapCellByPosition(me.shipyard.position).isOccupied) {
-            me.pushCommandToQueue(me.shipyard.spawn())
+            commandQueue.push(me.shipyard.spawn());
         }
 
-        await gameInstance.endTurn(me.getCommandQueue());
+        await gameInstance.endTurn(commandQueue);
     }
 });

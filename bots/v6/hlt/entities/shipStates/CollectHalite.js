@@ -12,6 +12,7 @@ class CollectHalite {
     _init () {
         this.playerAI = this.ship.getPlayerPublicMethods().getAI();
         this.gameMap = this.playerAI.getGameMap();
+        this.areaId = this.playerAI.getAreaIdForPosition(this.ship.getPosition());
     }
 
     checkIfNeedsToTransitionToNewState () {
@@ -44,6 +45,14 @@ class CollectHalite {
         const _choices = [];
 
         _positionOptions.map(_positionOption => {
+            /*{
+            const _bIsInArea = this.playerAI.getAreaIdForPosition(_positionOption) === this.areaId;
+
+            if (!_bIsInArea) {
+                return;
+            }
+            */
+
             const _mapCell = this.gameMap.getMapCellByPosition(_positionOption);
 
             if (!_mapCell.isEmpty) {
