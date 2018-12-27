@@ -86,7 +86,7 @@ class Player {
      * the game engine.
      * @private
      */
-    async _update(numShips, numDropoffs, halite, _readAndParseLine) {
+    async _update(numShips, numDropoffs, halite, _readAndParseLine, _bIsMe) {
         this.haliteAmount = halite;
         const _newShipMap = new Map();
 
@@ -96,12 +96,14 @@ class Player {
             let ship = this._ships.get(shipId);
 
             if (!ship) {
-                ship = new Ship(this.id, shipId, new Position(xPos, yPos), halite)
-                    .setPlayerPublicMethods({
+                ship = new Ship(this.id, shipId, new Position(xPos, yPos), halite);
+
+                if (_bIsMe) {
+                    ship.setPlayerPublicMethods({
                         getShipyard: this.getShipyard,
                         getAI: this.getAI
-                    })
-                    .initState();
+                    }).initState();
+                }
             }
 
             ship.setPosition(new Position(xPos, yPos)).setHaliteAmountInCargo(halite);

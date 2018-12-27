@@ -1,0 +1,12 @@
+
+Turn 2
+================================================================
+error: failed to decode bot message: "S" (at position 1)
+Last input received was:
+Ship {
+  owner: 1,
+  id: 1,
+  position: Position { x: 23, y: 16 },
+  haliteAmount: 0 }
+m 1 e
+

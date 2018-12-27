@@ -6,7 +6,13 @@ class MoveToArea {
     constructor (_validStates, _ship) {
         this.validStates = _validStates;
         this.ship = _ship;
+        this._init();
+    }
+
+    _init () {
         this.playerAI = this.ship.getPlayerPublicMethods().getAI();
+        this.areaId = this.playerAI.getAreaIdForPosition(this.ship.getPosition());
+
     }
 
     checkIfNeedsToTransitionToNewState () {

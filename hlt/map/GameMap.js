@@ -152,6 +152,50 @@ class GameMap {
         return Direction.Still;
     }
 
+    efficientNavigate (_ship, _destination) {
+        const _shipPosition = _ship.getPosition();
+
+        const _choices = [];
+
+        this.getUnsafeMoves(_shipPosition, _destination).forEach(_direction => {
+            const _targetPosition = _shipPosition.directionalOffset(_direction);
+            const _mapCell = this.getMapCellByPosition(_targetPosition);
+
+            if (!_mapCell.isEmpty) {
+                return;
+            }
+
+            _choices.push({
+                mapCell: _mapCell,
+                direction: _direction,
+                halite: _mapCell.getHaliteAmount()
+            });
+        });
+
+        if (_choices.length === 0) {
+            return Direction.Still;
+        }
+
+        if (_choices.length === 1) {
+            return _choices[0].direction;
+        }
+
+        const _chosen = _choices[0].halite <= _choices[1].halite ? _choices[0] : _choices[1];
+        
+        _chosen.mapCell.markUnsafe(_ship);
+
+        return _chosen.direction;
+    }
+
+    kamiKazeNavigate (_ship, _destination) {
+        const _directions = this.getUnsafeMoves(_ship.position, _destination);
+        const _targetPosition = _ship.getPosition().directionalOffset(_directions[0]);
+
+        this.getMapCellByPosition(_targetPosition).markUnsafe(_ship);
+        
+        return _directions[0];
+    }
+
     resetShipsOnMap () {
         for (let y = 0; y < this.height; y++) {
             for (let x = 0; x < this.width; x++) {

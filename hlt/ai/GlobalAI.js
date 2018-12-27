@@ -33,6 +33,10 @@ class GlobalAI {
         return this;
     }
 
+    getShipyardPosition () {
+        return this.shipyardPosition;
+    }
+
     _initEmptyMapTilesToAreasMap (_width, _height) {
         const _map = new Array(_height);
 
@@ -107,6 +111,10 @@ class GlobalAI {
 
     resetEnemyShipDistribution () {
         this.state.numOfEnemyShips = new Array(this.numOfAreas).fill(0);
+    }
+
+    getAreaIdForPosition (_position) {
+        return this.mapCellsToAreasMap[_position.y][_position.x];
     }
 
     static normalizeDataArray (_values) {

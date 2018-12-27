@@ -6,8 +6,14 @@ class MoveToDropoff {
     constructor (_validStates, _ship) {
         this.validStates = _validStates;
         this.ship = _ship;
-        this.destination = this.ship.getPlayerPublicMethods().getShipyard().getPosition();
-        this.gameMap = this.ship.getPlayerPublicMethods().getAI().getGameMap();
+        this._init();
+    }
+
+    _init () {
+        const _playerAI = this.ship.getPlayerPublicMethods().getAI();
+
+        this.destination = _playerAI.getShipyardPosition();
+        this.gameMap = _playerAI.getGameMap();
     }
 
     checkIfNeedsToTransitionToNewState () {

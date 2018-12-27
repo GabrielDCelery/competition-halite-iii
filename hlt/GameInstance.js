@@ -87,6 +87,7 @@ class GameInstance {
         }
 
         this.gameMap = new GameMap(_gameMap, _mapWidth, _mapHeight);
+
         this.me.getAI().setGameMap(this.gameMap).init();
     }
 
@@ -104,7 +105,8 @@ class GameInstance {
 
         for (let i = 0; i < this.players.size; i++) {
             const [ _playerId, numShips, numDropoffs, halite ] = await this._readAndParseLine();
-            await this.players.get(_playerId)._update(numShips, numDropoffs, halite, this._readAndParseLine);
+            const _bIsMe = _playerId === this.myId;
+            await this.players.get(_playerId)._update(numShips, numDropoffs, halite, this._readAndParseLine, _bIsMe);
         }
 
         this.me.getAI().resetEnemyShipDistribution();
