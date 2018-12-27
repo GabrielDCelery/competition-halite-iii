@@ -25,7 +25,7 @@ class MoveToDropoff {
     }
 
     createCommandForTurn () {
-        const _safeMove = this.gameMap.naiveNavigate(this.ship, this.destination);
+        const _safeMove = this.gameMap.efficientNavigate(this.ship, this.destination);
 
         return this.ship.move(_safeMove);
     }

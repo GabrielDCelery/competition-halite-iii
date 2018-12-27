@@ -161,7 +161,7 @@ class GameMap {
             const _targetPosition = _shipPosition.directionalOffset(_direction);
             const _mapCell = this.getMapCellByPosition(_targetPosition);
 
-            if (!_mapCell.isEmpty) {
+            if (_mapCell.isOccupied) {
                 return;
             }
 
@@ -177,6 +177,8 @@ class GameMap {
         }
 
         if (_choices.length === 1) {
+            _choices[0].mapCell.markUnsafe(_ship);
+
             return _choices[0].direction;
         }
 
