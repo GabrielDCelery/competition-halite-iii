@@ -25,7 +25,7 @@ gameInstance.initialize().then(async () => {
             }
         }
 
-        if (gameInstance.turnNumber < 0.75 * hlt.constants.MAX_TURNS &&
+        if (gameInstance.turnNumber < 0.5 * hlt.constants.MAX_TURNS &&
             me.haliteAmount >= hlt.constants.SHIP_COST &&
             !gameMap.getMapCellByPosition(me.shipyard.position).isOccupied) {
             me.pushCommandToQueue(me.shipyard.spawn())
