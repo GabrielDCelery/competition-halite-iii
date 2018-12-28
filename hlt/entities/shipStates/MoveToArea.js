@@ -110,7 +110,6 @@ class MoveToArea {
             const _shipOnCell = _chosen.ship;
 
             if (_shipOnCell && _shipOnCell.getOwner() === this.ship.getOwner() && !this.lastSwappedWithShip.get(_shipOnCell.getId()) && _shipOnCell.callMethodOnState('requestSwap', [this.ship])) {
-                this.lastSwappedWithShip.set(_shipOnCell.getId());
                 _chosen.mapCell.markUnsafe(this.ship);
 
                 return this.ship.move(_chosen.direction);
