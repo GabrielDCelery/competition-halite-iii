@@ -17,7 +17,7 @@ class MoveToArea {
         this.gameMap = this.playerAI.getGameMap();
         this.targetAreaId = this.playerAI.getAreaRecommendationForShip(this.ship);
         this.destination = this._getPositionNotInAlignment(this.ship.getPosition(), this.playerAI.getCenterPositionsForAreaId(this.targetAreaId));
-        this.lastSwappedWithShip = null;
+        this.lastSwappedWithShip = new Map();
     }
 
     toggleCommandCreatedForTurn (_boolean) {
@@ -27,7 +27,7 @@ class MoveToArea {
     }
 
     requestSwap (_ship) {
-        if (this.commandCreatedForTurn === true || this.lastSwappedWithShip === _ship.getId()) {
+        if (this.commandCreatedForTurn === true || this.lastSwappedWithShip.get(_ship.getId())) {
             return false;
         }
 
@@ -49,7 +49,7 @@ class MoveToArea {
         const _chosen = _choices[0];
 
         if (_ship.getPosition().equals(_chosen.mapCell.getPosition())) {
-            this.lastSwappedWithShip = _ship.getId();
+            this.lastSwappedWithShip.set(_ship.getId(), true);
             _chosen.mapCell.markUnsafe(this.ship);
             this.toggleCommandCreatedForTurn(true);
             this.ship.getPlayerPublicMethods().pushCommandToQueue(this.ship.move(_chosen.direction));
@@ -109,7 +109,8 @@ class MoveToArea {
             const _chosen = _choices[_i];
             const _shipOnCell = _chosen.ship;
 
-            if (_shipOnCell && _shipOnCell.getOwner() === this.ship.getOwner() && this.lastSwappedWithShip !== _shipOnCell.getId() && _shipOnCell.callMethodOnState('requestSwap', [this.ship])) {
+            if (_shipOnCell && _shipOnCell.getOwner() === this.ship.getOwner() && !this.lastSwappedWithShip.get(_shipOnCell.getId()) && _shipOnCell.callMethodOnState('requestSwap', [this.ship])) {
+                this.lastSwappedWithShip.set(_shipOnCell.getId());
                 _chosen.mapCell.markUnsafe(this.ship);
 
                 return this.ship.move(_chosen.direction);
