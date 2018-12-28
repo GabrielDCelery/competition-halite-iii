@@ -131,6 +131,17 @@ class Player {
 
             _newShipMap.set(shipId, ship);
         }
+
+        if (_bIsMe && this._ships.size !== _newShipMap.size) {
+            this._ships.forEach(_ship => {
+                const _shipId = _ship.getId();
+
+                if (!_newShipMap.get(_shipId)) {
+                    return this.getAI().decreaseNumOfAlliedShipsInArea(_shipId);
+                }
+            });
+        }
+
         this._ships = _newShipMap;
 
         this._dropoffs = new Map();

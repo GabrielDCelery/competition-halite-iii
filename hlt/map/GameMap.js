@@ -197,34 +197,16 @@ class GameMap {
     getAnalyzedListOfChoicesTowardsDestination (_ship, _destination) {
         const _shipPosition = _ship.getPosition();
 
-        const _choices = [];
-        const _unsafeMoves = this.getUnsafeMoves(_shipPosition, _destination);
-
-        _unsafeMoves.forEach(_direction => {
+        const _choices = this.getUnsafeMoves(_shipPosition, _destination).map(_direction => {
             const _targetPosition = _shipPosition.directionalOffset(_direction);
             const _mapCell = this.getMapCellByPosition(_targetPosition);
 
-            const _shipOnCell = _mapCell.getShip();
-
-            if (_shipOnCell) {
-                if (_shipOnCell.getOwner() === _ship.getOwner()) {
-                    return _choices.push({
-                        mapCell: _mapCell,
-                        direction: _direction,
-                        halite: _mapCell.getHaliteAmount(),
-                        friendlyShipOnCell: _shipOnCell
-                    });
-                }
-
-                return;
-            }
-
-            _choices.push({
+            return {
                 mapCell: _mapCell,
                 direction: _direction,
                 halite: _mapCell.getHaliteAmount(),
-                friendlyShipOnCell: null
-            });
+                ship: _mapCell.getShip() || null
+            };
         });
         
         return _choices.sort(GameMap.sortByProperty('halite'));

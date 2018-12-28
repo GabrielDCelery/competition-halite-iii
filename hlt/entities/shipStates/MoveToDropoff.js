@@ -85,16 +85,24 @@ class MoveToDropoff {
 
         for (let _i = 0, _iMax = _choices.length; _i < _iMax; _i++) {
             const _chosen = _choices[_i];
-            const _friendlyShip = _chosen.friendlyShipOnCell;
+            const _shipOnCell = _chosen.ship;
 
-            if (!_friendlyShip) {
+            if (!_shipOnCell) {
                 this.gameMap.getMapCellByPosition(this.ship.getPosition()).markSafe();
                 _chosen.mapCell.markUnsafe(this.ship);
 
                 return this.ship.move(_chosen.direction);
             }
-            
-            if (_friendlyShip.callMethodOnState('requestSwap', [this.ship])) {
+
+            const _bIsFriendlyShip = _shipOnCell.getOwner() === this.ship.getOwner();
+
+            if (!_bIsFriendlyShip && _chosen.mapCell.getPosition().equals(this.destination)) {
+                _chosen.mapCell.markUnsafe(this.ship);
+
+                return this.ship.move(_chosen.direction);
+            }
+
+            if (_bIsFriendlyShip && _shipOnCell.callMethodOnState('requestSwap', [this.ship])) {
                 _chosen.mapCell.markUnsafe(this.ship);
 
                 return this.ship.move(_chosen.direction);

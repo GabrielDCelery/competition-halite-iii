@@ -1,7 +1,6 @@
 'use strict';
 
 const VALID_STATES = {
-    CollectHalite: require('./shipStates/CollectHalite'),
     MoveToDropoff: require('./shipStates/MoveToDropoff'),
     CollectHaliteInArea: require('./shipStates/CollectHaliteInArea'),
     MoveToArea: require('./shipStates/MoveToArea')
@@ -15,7 +14,6 @@ class ShipStateFactory {
 
     static get VALID_STATES () {
         return {
-            CollectHalite: 'CollectHalite',
             MoveToDropoff: 'MoveToDropoff',
             CollectHaliteInArea: 'CollectHaliteInArea',
             MoveToArea: 'MoveToArea'
