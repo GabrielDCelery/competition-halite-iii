@@ -16,6 +16,7 @@ class MoveToDropoff {
         this.playerAI = this.ship.getPlayerPublicMethods().getAI();
         this.gameMap = this.playerAI.getGameMap();
         this.destination = this.playerAI.getShipyardPosition();
+        this.lastSwappedWithShip = null;
     }
 
     toggleCommandCreatedForTurn (_boolean) {
@@ -25,7 +26,7 @@ class MoveToDropoff {
     }
 
     requestSwap (_ship) {
-        if (this.commandCreatedForTurn === true) {
+        if (this.commandCreatedForTurn === true || this.lastSwappedWithShip === _ship.getId()) {
             return false;
         }
 
@@ -40,22 +41,21 @@ class MoveToDropoff {
 
         const _choices = this.gameMap.getAnalyzedListOfChoicesTowardsDestination(this.ship, _ship.getPosition());
 
-        if (_choices.length === 0) {
+        if (_choices.length !== 1) {
             return false;
         }
 
-        for (let _i = 0, _iMax = _choices.length; _i < _iMax; _i++) {
-            const _chosen = _choices[_i];
+        const _chosen = _choices[0];
 
-            if (_ship.getPosition().equals(_chosen.mapCell.getPosition())) {
-                _chosen.mapCell.markUnsafe(this.ship);
-                this.toggleCommandCreatedForTurn(true);
-                this.ship.getPlayerPublicMethods().pushCommandToQueue(this.ship.move(_chosen.direction));
+        if (_ship.getPosition().equals(_chosen.mapCell.getPosition())) {
+            this.lastSwappedWithShip = _ship.getId();
+            _chosen.mapCell.markUnsafe(this.ship);
+            this.toggleCommandCreatedForTurn(true);
+            this.ship.getPlayerPublicMethods().pushCommandToQueue(this.ship.move(_chosen.direction));
 
-                return true;
-            }
+            return true;
         }
-
+        
         return false;
     }
 
@@ -83,13 +83,15 @@ class MoveToDropoff {
     
         const _choices = this.gameMap.getAnalyzedListOfChoicesTowardsDestination(this.ship, this.destination);
 
-        if (_choices.length === 0) {
-            return this.ship.stayStill();
-        }
-
         for (let _i = 0, _iMax = _choices.length; _i < _iMax; _i++) {
             const _chosen = _choices[_i];
             const _shipOnCell = _chosen.ship;
+
+            if (_shipOnCell && _shipOnCell.getOwner() === this.ship.getOwner() && this.lastSwappedWithShip !== _shipOnCell.getId() && _shipOnCell.callMethodOnState('requestSwap', [this.ship])) {
+                _chosen.mapCell.markUnsafe(this.ship);
+
+                return this.ship.move(_chosen.direction);
+            }
 
             if (!_shipOnCell) {
                 this.gameMap.getMapCellByPosition(this.ship.getPosition()).markSafe();
@@ -98,16 +100,8 @@ class MoveToDropoff {
                 return this.ship.move(_chosen.direction);
             }
 
-            const _bIsFriendlyShip = _shipOnCell.getOwner() === this.ship.getOwner();
-
-            if (!_bIsFriendlyShip && _chosen.mapCell.getPosition().equals(this.destination)) {
+            if (_shipOnCell.getOwner() !== this.ship.getOwner() && _chosen.mapCell.getPosition().equals(this.destination)) {
                 this.gameMap.getMapCellByPosition(this.ship.getPosition()).markSafe();
-                _chosen.mapCell.markUnsafe(this.ship);
-
-                return this.ship.move(_chosen.direction);
-            }
-
-            if (_bIsFriendlyShip && _shipOnCell.callMethodOnState('requestSwap', [this.ship])) {
                 _chosen.mapCell.markUnsafe(this.ship);
 
                 return this.ship.move(_chosen.direction);

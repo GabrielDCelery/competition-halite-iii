@@ -208,7 +208,7 @@ class GameMap {
                 ship: _mapCell.getShip() || null
             };
         });
-        
+
         return _choices.sort(GameMap.sortByProperty('halite'));
     }
 
@@ -264,6 +264,20 @@ class GameMap {
 
             if (a[_property] > b[_property]) {
                 return 1;
+            }
+
+            return 0;
+        }
+    }
+
+    static reverseSortByProperty (_property) {
+        return function compare(a,b) {
+            if (a[_property] < b[_property]) {
+                return 1;
+            }
+
+            if (a[_property] > b[_property]) {
+                return -1;
             }
 
             return 0;

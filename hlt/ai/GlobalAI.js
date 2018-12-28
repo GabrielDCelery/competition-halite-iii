@@ -114,7 +114,7 @@ class GlobalAI {
             return (_distance1 + _distance2) / 2;
         });
 
-        this.state.distances = GlobalAI.normalizeDataArray(_distances).map(_distance => { return (1 - _distance) * (1 - _distance) * (1 - _distance)});
+        this.state.distances = GlobalAI.normalizeDataArray(_distances).map(_distance => { return (1 - _distance) * (1 - _distance)});
     }
 
     init () {
@@ -156,7 +156,10 @@ class GlobalAI {
     }
 
     _calculateRecommendationValueForArea (_areaId) {
-        const _totalHarvestable =  this.state.haliteAmounts[_areaId] - this.state.numOfEnemyShips[_areaId] * 500 - this.state.numOfAlliedShipsSentToHarvest[_areaId] * 800;
+        const _totalHarvestable = 
+            this.state.haliteAmounts[_areaId] - 
+            this.state.numOfEnemyShips[_areaId] * 500 -
+            this.state.numOfAlliedShipsSentToHarvest[_areaId] * 800;
        
         return parseInt(_totalHarvestable * this.state.distances[_areaId], 10);
     }

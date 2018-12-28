@@ -51,9 +51,9 @@ class ShipStateFactory {
             this.setState(_newStateName);
         }
 
-        const _command = this.state.createCommandForTurn();
-
         this.toggleCommandCreatedForTurn(true);
+
+        const _command = this.state.createCommandForTurn();
 
         return _command;
     }
