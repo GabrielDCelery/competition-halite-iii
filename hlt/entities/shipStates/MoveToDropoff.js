@@ -39,9 +39,9 @@ class MoveToDropoff {
             return false;
         }
 
-        const _choices = this.gameMap.getAnalyzedListOfChoicesTowardsDestination(this.ship, _ship.getPosition());
+        const _choices = this.gameMap.getAnalyzedListOfChoicesTowardsDestination(this.ship, this.destination);
 
-        if (_choices.length !== 1) {
+        if (_choices.length === 0) {
             return false;
         }
 
@@ -78,6 +78,10 @@ class MoveToDropoff {
         const _canMove = Math.floor(_haliteOnTile / 10) <= _haliteInShipCargo;
 
         if (!_canMove) {
+            return this.ship.stayStill();
+        }
+
+        if (_haliteInShipCargo < 950 && _haliteInShipCargo * 0.3 < _haliteOnTile) {
             return this.ship.stayStill();
         }
     

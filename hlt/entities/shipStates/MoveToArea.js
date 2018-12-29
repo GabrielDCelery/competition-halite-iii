@@ -40,9 +40,9 @@ class MoveToArea {
             return false;
         }
 
-        const _choices = this.gameMap.getAnalyzedListOfChoicesTowardsDestination(this.ship, _ship.getPosition());
+        const _choices = this.gameMap.getAnalyzedListOfChoicesTowardsDestination(this.ship, this.destination);
 
-        if (_choices.length !== 1) {
+        if (_choices.length === 0) {
             return false;
         }
 
