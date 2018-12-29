@@ -2,7 +2,7 @@
 
 const constants = require('../../settings/constants');
 
-class MoveToDropoff {
+class MoveToArea {
     constructor (_validStates, _ship) {
         this.validStates = _validStates;
         this.ship = _ship;
@@ -15,8 +15,9 @@ class MoveToDropoff {
     _init () {
         this.playerAI = this.ship.getPlayerPublicMethods().getAI();
         this.gameMap = this.playerAI.getGameMap();
-        this.destination = this.playerAI.getShipyardPosition();
-        this.lastSwappedWithShip = null;
+        this.targetAreaId = this.playerAI.getAreaRecommendationForShip(this.ship);
+        this.destination = this._getPositionNotInAlignment(this.ship.getPosition(), this.playerAI.getCenterPositionsForAreaId(this.targetAreaId));
+        this.lastSwappedWithShip = new Map();
     }
 
     toggleCommandCreatedForTurn (_boolean) {
@@ -26,7 +27,7 @@ class MoveToDropoff {
     }
 
     requestSwap (_ship) {
-        if (this.commandCreatedForTurn === true || this.lastSwappedWithShip === _ship.getId()) {
+        if (this.commandCreatedForTurn === true || this.lastSwappedWithShip.get(_ship.getId())) {
             return false;
         }
 
@@ -48,15 +49,25 @@ class MoveToDropoff {
         const _chosen = _choices[0];
 
         if (_ship.getPosition().equals(_chosen.mapCell.getPosition())) {
-            this.lastSwappedWithShip = _ship.getId();
+            this.lastSwappedWithShip.set(_ship.getId(), true);
             _chosen.mapCell.markUnsafe(this.ship);
             this.toggleCommandCreatedForTurn(true);
             this.ship.getPlayerPublicMethods().pushCommandToQueue(this.ship.move(_chosen.direction));
 
             return true;
         }
-        
+
         return false;
+    }
+
+    _getPositionNotInAlignment (_shipPosition, _targetPositions) {
+        for (let _i = 0, _iMax = _targetPositions.length; _i < _iMax; _i++) {
+            if (_shipPosition.x !== _targetPositions[_i].x && _shipPosition.y !== _targetPositions[_i].y) {
+                return _targetPositions[_i];
+            }
+        }
+
+        return _shipPosition;
     }
 
     checkIfNeedsToTransitionToNewState () {
@@ -64,8 +75,12 @@ class MoveToDropoff {
             return this.validStates.SuicideRushHome;
         }
 
-        if (this.ship.getHaliteInCargo() === 0) {
-            return this.validStates.MoveToArea;
+        if (constants.MAX_HALITE * 0.8 < this.ship.getHaliteInCargo()) {
+            return this.validStates.MoveToDropoff;
+        }
+
+        if (this.playerAI.getAreaIdForPosition(this.ship.getPosition()) === this.targetAreaId) {
+            return this.validStates.CollectHaliteInArea;
         }
 
         return null;
@@ -80,15 +95,21 @@ class MoveToDropoff {
         if (!_canMove) {
             return this.ship.stayStill();
         }
-    
+
+        const _worthAmount = this.playerAI.getHaliteAmountPerCellInArea(this.playerAI.getAreaIdForPosition(this.ship.getPosition())) * 0.5
+        const _worthToStayOnTile = _worthAmount <= _haliteOnTile || constants.MAX_HALITE / 10 < _haliteOnTile;
+
+        if (_worthToStayOnTile) {
+            return this.ship.stayStill();
+        }
+
         const _choices = this.gameMap.getAnalyzedListOfChoicesTowardsDestination(this.ship, this.destination);
 
         for (let _i = 0, _iMax = _choices.length; _i < _iMax; _i++) {
             const _chosen = _choices[_i];
             const _shipOnCell = _chosen.ship;
 
-            if (_shipOnCell && _shipOnCell.getOwner() === this.ship.getOwner() && this.lastSwappedWithShip !== _shipOnCell.getId() && _shipOnCell.callMethodOnState('requestSwap', [this.ship])) {
-                this.lastSwappedWithShip = _shipOnCell.getId();
+            if (_shipOnCell && _shipOnCell.getOwner() === this.ship.getOwner() && !this.lastSwappedWithShip.get(_shipOnCell.getId()) && _shipOnCell.callMethodOnState('requestSwap', [this.ship])) {
                 _chosen.mapCell.markUnsafe(this.ship);
 
                 return this.ship.move(_chosen.direction);
@@ -100,15 +121,8 @@ class MoveToDropoff {
 
                 return this.ship.move(_chosen.direction);
             }
-
-            if (_shipOnCell.getOwner() !== this.ship.getOwner() && _chosen.mapCell.getPosition().equals(this.destination)) {
-                this.gameMap.getMapCellByPosition(this.ship.getPosition()).markSafe();
-                _chosen.mapCell.markUnsafe(this.ship);
-
-                return this.ship.move(_chosen.direction);
-            }
         }
     }
 }
 
-module.exports = MoveToDropoff;
+module.exports = MoveToArea;

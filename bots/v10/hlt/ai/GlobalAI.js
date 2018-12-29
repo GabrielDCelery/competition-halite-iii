@@ -4,11 +4,10 @@ const constants = require('../settings/constants');
 const AREA_SIZE = 4;
 
 const TURNS_TO_GET_HOME_WEIGHT = 1.2;
-let _arr = []
+
 class GlobalAI {
     constructor() {
         this.turnNumber = 0;
-        this.totalHaliteAtBeginningOfGame = 0;
         this.maxTurnsToGetHome = null;
         this.shipsAreCalledHome = false;
         this.areaGrid = null;
@@ -91,9 +90,8 @@ class GlobalAI {
                 this.mapCellsToAreasMap[_y][_x] = _areaId;
 
                 const _mapCell = this.gameMap.getMapCellByIndex(_x, _y);
-                const _haliteOnCell = _mapCell.getHaliteAmount();
-                this.totalHaliteAtBeginningOfGame += _haliteOnCell;
-                this.state.haliteAmounts[_areaId] += _haliteOnCell;
+
+                this.state.haliteAmounts[_areaId] += _mapCell.getHaliteAmount();
 
                 _areasPositions[_areaId].push(_mapCell.getPosition());
 
@@ -116,7 +114,7 @@ class GlobalAI {
             return (_distance1 + _distance2) / 2;
         });
 
-        this.state.distances = GlobalAI.normalizeDataArray(_distances).map(_distance => { return (1 - _distance) * (1 - _distance) * (1 - _distance)});
+        this.state.distances = GlobalAI.normalizeDataArray(_distances).map(_distance => { return (1 - _distance) * (1 - _distance)});
     }
 
     init () {
@@ -220,16 +218,6 @@ class GlobalAI {
         }
 
         return false;
-    }
-
-    checkIfWorthSpawningShip () {
-        let _haliteRemaining = 0;
-
-        for (let _i = 0, _iMax = this.state.haliteAmounts.length; _i < _iMax; _i++) {
-            _haliteRemaining += this.state.haliteAmounts[_i];
-        }
-
-        return 0.6 < _haliteRemaining / this.totalHaliteAtBeginningOfGame;
     }
 
     static normalizeDataArray (_values) {
