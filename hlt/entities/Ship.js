@@ -3,8 +3,8 @@
 const commands = require('../settings/commands');
 const constants = require('../settings/constants');
 const GameEntity = require('./GameEntity');
-const Position = require('../map/helpers/Position');
 const ShipStateFactory = require('./ShipStateFactory');
+const ShipAI = require('../ai/ShipAI');
 
 /** Represents a ship. */
 class Ship extends GameEntity {
@@ -12,6 +12,10 @@ class Ship extends GameEntity {
         super(_owner, _id, _position);
         this.haliteAmount = _haliteAmount;
         this.toggleCommandCreatedForTurn = this.toggleCommandCreatedForTurn.bind(this);
+    }
+
+    getAI () {
+        return this.ai;
     }
 
     setHaliteAmountInCargo (_haliteAmount) {
@@ -22,6 +26,12 @@ class Ship extends GameEntity {
 
     initState () {
         this.state = new ShipStateFactory(this);
+
+        return this;
+    }
+
+    initAI () {
+        this.ai = new ShipAI(this);
 
         return this;
     }

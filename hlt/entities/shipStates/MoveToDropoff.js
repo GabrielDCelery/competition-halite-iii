@@ -1,28 +1,14 @@
 'use strict';
 
 const constants = require('../../settings/constants');
+const _ShipStateInterface = require('./_ShipStateInterface');
 
-class MoveToDropoff {
+class MoveToDropoff extends _ShipStateInterface {
     constructor (_validStates, _ship) {
-        this.validStates = _validStates;
-        this.ship = _ship;
-        this.commandCreatedForTurn = false;
+        super(_validStates, _ship);
         this.requestSwap = this.requestSwap.bind(this);
-        this.toggleCommandCreatedForTurn = this.toggleCommandCreatedForTurn.bind(this);
-        this._init();
-    }
-
-    _init () {
-        this.playerAI = this.ship.getPlayerPublicMethods().getAI();
-        this.gameMap = this.playerAI.getGameMap();
         this.destination = this.playerAI.getShipyardPosition();
         this.lastSwappedWithShip = null;
-    }
-
-    toggleCommandCreatedForTurn (_boolean) {
-        this.commandCreatedForTurn = _boolean;
-
-        return this;
     }
 
     requestSwap (_ship) {
@@ -30,12 +16,7 @@ class MoveToDropoff {
             return false;
         }
 
-        const _haliteOnTile = this.gameMap.getMapCellByPosition(this.ship.getPosition()).getHaliteAmount();
-        const _haliteInShipCargo = this.ship.getHaliteInCargo();
-
-        const _canMove = Math.floor(_haliteOnTile / 10) <= _haliteInShipCargo;
-
-        if (!_canMove) {
+        if (!this.ship.getAI().canMove()) {
             return false;
         }
 
@@ -75,13 +56,10 @@ class MoveToDropoff {
         const _haliteOnTile = this.gameMap.getMapCellByPosition(this.ship.getPosition()).getHaliteAmount();
         const _haliteInShipCargo = this.ship.getHaliteInCargo();
 
-        const _canMove = Math.floor(_haliteOnTile / 10) <= _haliteInShipCargo;
-
-        if (!_canMove) {
-            return this.ship.stayStill();
-        }
-
-        if (_haliteInShipCargo < 950 && _haliteInShipCargo * 0.3 < _haliteOnTile) {
+        if (
+            !this.ship.getAI().canMove() || 
+            _haliteInShipCargo < 950 && _haliteInShipCargo * 0.3 < _haliteOnTile
+        ) {
             return this.ship.stayStill();
         }
     

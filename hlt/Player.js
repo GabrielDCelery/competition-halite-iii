@@ -119,7 +119,7 @@ class Player {
                         getShipyard: this.getShipyard,
                         getAI: this.getAI,
                         pushCommandToQueue: this.pushCommandToQueue
-                    }).initState();
+                    }).initAI().initState();
                 }
             }
 

@@ -1,31 +1,18 @@
 'use strict';
 
 const constants = require('../../settings/constants');
+const _ShipStateInterface = require('./_ShipStateInterface');
 
-class CollectHalite {
+class CollectHalite extends _ShipStateInterface {
     constructor (_validStates, _ship) {
-        this.validStates = _validStates;
-        this.ship = _ship;
-        this.commandCreatedForTurn = false;
-        this.toggleCommandCreatedForTurn = this.toggleCommandCreatedForTurn.bind(this);
-        this._init();
-    }
-
-    toggleCommandCreatedForTurn (_boolean) {
-        this.commandCreatedForTurn = _boolean;
-
-        return this;
-    }
-
-    _init () {
-        this.playerAI = this.ship.getPlayerPublicMethods().getAI();
-        this.gameMap = this.playerAI.getGameMap();
-        this.areaId = this.playerAI.getAreaIdForPosition(this.ship.getPosition());
+        super(_validStates, _ship);
+        this.areaId = this.ship.getAI().whichAreaIAmIn();
         this.previouslyVisitedCell = {
             x: null,
             y: null
         };
-        this.worthAmount = this.playerAI.getHaliteAmountPerCellInArea(this.areaId) * 0.5;
+        this.averageHaliteAmountOnTile = this.ship.getAI().getAverageHaliteAmountOnTileInMyArea() * 0.5;
+
         this.numOfTurnsSpentAtWanderingInArea = 0;
     }
 
@@ -34,7 +21,7 @@ class CollectHalite {
             return this.validStates.SuicideRushHome;
         }
 
-        if (this.numOfTurnsSpentAtWanderingInArea > 6 || constants.MAX_HALITE * 0.8 < this.ship.getHaliteInCargo()) {
+        if (this.numOfTurnsSpentAtWanderingInArea > 6 || this.ship.getAI().isCargoFullEnoughForDropoff()) {
             this.playerAI.decreaseNumOfAlliedShipsInArea(this.ship.getId());
 
             return this.validStates.MoveToDropoff;
@@ -44,21 +31,15 @@ class CollectHalite {
     }
 
     createCommandForTurn () {
+        const _shipAI = this.ship.getAI();
         const _shipPosition = this.ship.getPosition();
         const _haliteOnTile = this.gameMap.getMapCellByPosition(_shipPosition).getHaliteAmount();
-        const _haliteInShipCargo = this.ship.getHaliteInCargo();
+        const _worthToStayOnTile = this.averageHaliteAmountOnTile <= _haliteOnTile || constants.MAX_HALITE / 10 < _haliteOnTile;
 
-        const _isOnShipyard = _haliteOnTile === 0 && _haliteInShipCargo === 0;
-        //const _worthToStayOnTile = constants.MAX_HALITE / 10 < _haliteOnTile;
-        const _worthToStayOnTile = this.worthAmount <= _haliteOnTile || constants.MAX_HALITE / 10 < _haliteOnTile;
-
-        if (!_isOnShipyard && _worthToStayOnTile) {
-            return this.ship.stayStill();
-        }
-
-        const _canMove = Math.floor(_haliteOnTile / 10) <= _haliteInShipCargo;
-
-        if (!_canMove) {
+        if (
+            !_shipAI.canMove() || 
+            !_shipAI.amIOnADropoff() && _worthToStayOnTile
+        ) {
             return this.ship.stayStill();
         }
 

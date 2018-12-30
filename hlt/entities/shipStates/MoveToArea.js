@@ -1,29 +1,15 @@
 'use strict';
 
 const constants = require('../../settings/constants');
+const _ShipStateInterface = require('./_ShipStateInterface');
 
-class MoveToArea {
+class MoveToArea extends _ShipStateInterface {
     constructor (_validStates, _ship) {
-        this.validStates = _validStates;
-        this.ship = _ship;
-        this.commandCreatedForTurn = false;
+        super(_validStates, _ship);
         this.requestSwap = this.requestSwap.bind(this);
-        this.toggleCommandCreatedForTurn = this.toggleCommandCreatedForTurn.bind(this);
-        this._init();
-    }
-
-    _init () {
-        this.playerAI = this.ship.getPlayerPublicMethods().getAI();
-        this.gameMap = this.playerAI.getGameMap();
-        this.targetAreaId = this.playerAI.getAreaRecommendationForShip(this.ship);
+        this.targetAreaId = this.ship.getAI().requestHaliteRichAreaFromGlobalAI();
         this.destination = this._getPositionNotInAlignment(this.ship.getPosition(), this.playerAI.getCenterPositionsForAreaId(this.targetAreaId));
         this.lastSwappedWithShip = null;
-    }
-
-    toggleCommandCreatedForTurn (_boolean) {
-        this.commandCreatedForTurn = _boolean;
-
-        return this;
     }
 
     requestSwap (_ship) {
@@ -31,12 +17,7 @@ class MoveToArea {
             return false;
         }
 
-        const _haliteOnTile = this.gameMap.getMapCellByPosition(this.ship.getPosition()).getHaliteAmount();
-        const _haliteInShipCargo = this.ship.getHaliteInCargo();
-
-        const _canMove = Math.floor(_haliteOnTile / 10) <= _haliteInShipCargo;
-
-        if (!_canMove) {
+        if (!this.ship.getAI().canMove()) {
             return false;
         }
 
@@ -75,7 +56,7 @@ class MoveToArea {
             return this.validStates.SuicideRushHome;
         }
 
-        if (constants.MAX_HALITE * 0.8 < this.ship.getHaliteInCargo()) {
+        if (this.ship.getAI().isCargoFullEnoughForDropoff()) {
             return this.validStates.MoveToDropoff;
         }
 
@@ -87,19 +68,12 @@ class MoveToArea {
     }
 
     createCommandForTurn () {
-        const _haliteOnTile = this.gameMap.getMapCellByPosition(this.ship.getPosition()).getHaliteAmount();
-        const _haliteInShipCargo = this.ship.getHaliteInCargo();
+        const _shipAI = this.ship.getAI();
 
-        const _canMove = Math.floor(_haliteOnTile / 10) <= _haliteInShipCargo;
-
-        if (!_canMove) {
-            return this.ship.stayStill();
-        }
-
-        const _worthAmount = this.playerAI.getHaliteAmountPerCellInArea(this.playerAI.getAreaIdForPosition(this.ship.getPosition())) * 0.5
-        const _worthToStayOnTile = _worthAmount <= _haliteOnTile || constants.MAX_HALITE / 10 < _haliteOnTile;
-
-        if (_worthToStayOnTile) {
+        if (
+            !_shipAI.canMove() || 
+            !_shipAI.amIOnADropoff() && _shipAI.shouldIStayOnTileInsteadOfMovingTowardsArea()
+        ) {
             return this.ship.stayStill();
         }
 

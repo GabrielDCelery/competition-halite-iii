@@ -1,26 +1,12 @@
 'use strict';
 
 const constants = require('../../settings/constants');
+const _ShipStateInterface = require('./_ShipStateInterface');
 
-class SuicideRushHome {
+class SuicideRushHome extends _ShipStateInterface {
     constructor (_validStates, _ship) {
-        this.validStates = _validStates;
-        this.ship = _ship;
-        this.commandCreatedForTurn = false;
-        this.toggleCommandCreatedForTurn = this.toggleCommandCreatedForTurn.bind(this);
-        this._init();
-    }
-
-    _init () {
-        this.playerAI = this.ship.getPlayerPublicMethods().getAI();
-        this.gameMap = this.playerAI.getGameMap();
+        super(_validStates, _ship);
         this.destination = this.playerAI.getShipyardPosition();
-    }
-
-    toggleCommandCreatedForTurn (_boolean) {
-        this.commandCreatedForTurn = _boolean;
-
-        return this;
     }
 
     checkIfNeedsToTransitionToNewState () {
@@ -28,12 +14,7 @@ class SuicideRushHome {
     }
 
     createCommandForTurn () {
-        const _haliteOnTile = this.gameMap.getMapCellByPosition(this.ship.getPosition()).getHaliteAmount();
-        const _haliteInShipCargo = this.ship.getHaliteInCargo();
-
-        const _canMove = Math.floor(_haliteOnTile / 10) <= _haliteInShipCargo;
-
-        if (!_canMove) {
+        if (!this.ship.getAI().canMove()) {
             return this.ship.stayStill();
         }
     
