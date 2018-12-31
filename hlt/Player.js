@@ -18,7 +18,6 @@ class Player {
         this.commandQueue = [];
 
         this.setShipyard = this.setShipyard.bind(this);
-        this.setAI = this.setAI.bind(this);
         this.getShipyard = this.getShipyard.bind(this);
         this.getAI = this.getAI.bind(this);
         this.getHaliteAmount = this.getHaliteAmount.bind(this);
@@ -55,12 +54,6 @@ class Player {
 
     initAI () {
         this.ai = new GlobalAI(this);
-
-        return this;
-    }
-
-    setAI (_ai) {
-        this.ai = _ai;
 
         return this;
     }

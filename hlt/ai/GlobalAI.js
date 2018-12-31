@@ -2,7 +2,6 @@
 
 const constants = require('../settings/constants');
 const commonTransformations = require('../utils/commonTransformations');
-const AREA_SIZE = 4;
 
 const TURNS_TO_GET_HOME_WEIGHT = 1.2;
 
@@ -13,18 +12,14 @@ class GlobalAI {
         this.totalHaliteAtBeginningOfGame = 0;
         this.maxTurnsToGetHome = null;
         this.shipsAreCalledHome = false;
-        this.numOfAreas = null;
-        this.mapCellsToAreasMap = {};
-        this.alliedShipsAtAreasMap = {};
-        this.areas = null;
-        this.cache = {
-            normalizedDistancesFromShipyard: null
-        };
         this.bCreateDropoff = false;
         this.dropoffShipAssigned = false;
         this.justCreatedDropoff = false;
-        this.setGameMap = this.setGameMap.bind(this);
+
         this.getGameMap = this.getGameMap.bind(this);
+        this.setGameMap = this.setGameMap.bind(this);
+        this.setGameArea = this.setGameArea.bind(this);
+        this.setTurnNumber = this.setTurnNumber.bind(this);
     }
 
     getGameMap (_gameMap) {
@@ -33,6 +28,12 @@ class GlobalAI {
 
     setGameMap (_gameMap) {
         this.gameMap = _gameMap;
+
+        return this;
+    }
+
+    setGameArea (_gameArea) {
+        this.gameArea = _gameArea;
 
         return this;
     }
@@ -65,193 +66,34 @@ class GlobalAI {
         return _possibleDropoffs.sort(commonTransformations.sortByProperty('distance'))[0].position;
     }
 
-    _calculateRemainingHalite () {
-        let _remainingHalite = 0;
-
-        this.areas.forEach(_area => {
-            _remainingHalite += _area.halite;
-        });
-
-        return _remainingHalite;
-    }
-
-    _initEmptyMapTilesToAreasMap (_width, _height) {
-        const _map = new Array(_height);
-
-        for (let _y = 0, _yMax = _height; _y < _yMax; _y++)  {
-            _map[_y] = new Array(_width);
-
-            for (let _x = 0, _xMax = _width; _x < _xMax; _x++) {
-                _map[_y][_x] = null;
-            }
-        }
-
-        this.mapCellsToAreasMap = _map;
-    }
-
-    _initAreaGrid (_width, _height) {
-        const _numOfAreasInRow = _width / AREA_SIZE;
-        const _numOfAreasInColumn = _height / AREA_SIZE;
-
-        this.numOfAreas = _numOfAreasInRow * _numOfAreasInColumn;
-
-        this.areas = [...new Array(this.numOfAreas)].map(() => { 
-            return {
-                halite: 0,
-                numOfEnemyShips: 0,
-                numOfAlliedShipsSentToHarvest: 0,
-                centerPositions: [],
-                neighbouringAreaIds: []
-            }
-        });
-
-        this.cache.normalizedDistancesFromShipyard = new Array(this.numOfAreas).fill(null);
-
-        const _centerOffset1 = (AREA_SIZE - 1) / 2 + 0.5;
-        const _centerOffset2 = (AREA_SIZE - 1) / 2 - 0.5;
-
-        for (let _y = 0, _yMax = _height; _y < _yMax; _y++) {
-            for (let _x = 0, _xMax = _width; _x < _xMax; _x++) {
-                const _areaId = Math.floor(_x / AREA_SIZE) + Math.floor(_y / AREA_SIZE) * _numOfAreasInRow;
-
-                this.mapCellsToAreasMap[_y][_x] = _areaId;
-
-                const _mapCell = this.gameMap.getMapCellByIndex(_x, _y);
-                const _haliteOnCell = _mapCell.getHaliteAmount();
-                this.totalHaliteAtBeginningOfGame += _haliteOnCell;
-
-                const _remainderX = _x % AREA_SIZE;
-                const _remainderY = _y % AREA_SIZE;
-
-                this.areas[_areaId].halite += _haliteOnCell;
-                this.areas[_areaId].neighbouringAreaIds = this._getNeighbouringAreaIds(_areaId, _numOfAreasInRow, _numOfAreasInColumn);
-
-                if (
-                    (_remainderX === _centerOffset1 && _remainderY === _centerOffset1) || 
-                    (_remainderX === _centerOffset2 && _remainderY === _centerOffset2)
-                ) {
-                    this.areas[_areaId].centerPositions.push(_mapCell.getPosition());
-                }
-            }
-        }
-
-        this.cache.normalizedDistancesFromShipyard = this._calculateNormalizedWeightedDistancesToAreas(this.player.getShipyard().getPosition());
-    }
-
-    _calculateDistancesToAreas (_position) {
-        return this.areas.map(_area => {
-            return this.gameMap.calculateManhattanDistanceToMultiplePositions(_position, _area.centerPositions);
-        });
-    }
-
-    _calculateNormalizedWeightedDistancesToAreas (_position) {
-        const _distances = this._calculateDistancesToAreas(_position);
-
-        return commonTransformations.normalizeDataArray(_distances).map(_distance => { return (1 - _distance) * (1 - _distance) * (1 - _distance)});
-    }
-
-    _calculateHaliteForAreaAndItsSurroundings (_areaId) {
-        let _totalHalite = 0;
-
-        _totalHalite += this.areas[_areaId].halite;
-
-        const _neightbouringAreaIds = this.areas[_areaId].neighbouringAreaIds;
-
-        for (let _i = 0, _iMax = _neightbouringAreaIds.length; _i < _iMax; _i++) {
-            _totalHalite += this.areas[_neightbouringAreaIds[_i]].halite;
-        }
-
-        return _totalHalite;
-    }
-
-    _getNeighbouringAreaIds (_areaId, _nOfArInRow, _nOfArInCol) {
-        return [
-            this._getCellIdToLeft(this._getCellIdToTop(_areaId, _nOfArInRow, _nOfArInCol), _nOfArInRow, _nOfArInCol),
-            this._getCellIdToTop(_areaId, _nOfArInRow, _nOfArInCol),
-            this._getCellIdToRight(this._getCellIdToTop(_areaId, _nOfArInRow, _nOfArInCol), _nOfArInRow, _nOfArInCol),
-            this._getCellIdToLeft(_areaId, _nOfArInRow, _nOfArInCol),
-            this._getCellIdToRight(_areaId, _nOfArInRow, _nOfArInCol),
-            this._getCellIdToLeft(this._getCellIdToBottom(_areaId, _nOfArInRow, _nOfArInCol), _nOfArInRow, _nOfArInCol),
-            this._getCellIdToBottom(_areaId, _nOfArInRow, _nOfArInCol),
-            this._getCellIdToRight(this._getCellIdToBottom(_areaId, _nOfArInRow, _nOfArInCol), _nOfArInRow, _nOfArInCol)
-        ];
-    }
-
-    _getCellIdToTop (_areaId, _numOfAreasInRow, _numOfAreasInColumn) {
-        return _areaId < _numOfAreasInColumn ? _areaId + _numOfAreasInColumn * (_numOfAreasInRow - 1) : _areaId - _numOfAreasInColumn;
-    }
-
-    _getCellIdToLeft (_areaId, _numOfAreasInRow, _numOfAreasInColumn) {
-        return _areaId % _numOfAreasInRow === 0 ? _areaId + _numOfAreasInRow - 1 : _areaId - 1;
-    }
-
-    _getCellIdToRight (_areaId, _numOfAreasInRow, _numOfAreasInColumn) {
-        return (_areaId + 1) % _numOfAreasInRow === 0 ? _areaId - _numOfAreasInRow + 1 : _areaId + 1;
-    }
-
-    _getCellIdToBottom (_areaId, _numOfAreasInRow, _numOfAreasInColumn) {
-        return _numOfAreasInRow * _numOfAreasInColumn <= _areaId + _numOfAreasInRow ? _areaId % _numOfAreasInRow : _areaId + _numOfAreasInRow;
-    }
-
     init () {
         const _height = this.gameMap.getMapHeight();
         const _width = this.gameMap.getMapWidth();
 
         this.maxTurnsToGetHome = ((_height / 2) + (_width / 2)) * TURNS_TO_GET_HOME_WEIGHT;
 
-        this._initEmptyMapTilesToAreasMap (_width, _height);
-        this._initAreaGrid(_width, _height);
-
         return this;
     }
 
-    updateHaliteForAreaBeforeMapCellUpdate (_cellX, _cellY, _newValue) {
-        const _mapCell = this.gameMap.getMapCellByIndex(_cellX, _cellY);
-        const _diff = _mapCell.getHaliteAmount() - _newValue;
-        const _areaId = this.mapCellsToAreasMap[_cellY][_cellX];
-
-        this.areas[_areaId].halite = this.areas[_areaId].halite - _diff;
-    }
-
-    increaseEnemyNumberOfShipsInArea (_position) {
-        const _areaId = this.mapCellsToAreasMap[_position.y][_position.x];
-
-        this.areas[_areaId].numOfEnemyShips++;
-    }
-
-    resetEnemyShipDistribution () {
-        this.areas.forEach(_area => {
-            _area.numOfEnemyShips = 0;
-        });
-    }
-
     getAreaIdForPosition (_position) {
-        return this.mapCellsToAreasMap[_position.y][_position.x];
+        return this.gameArea.getAreaIdForPosition(_position);
     }
 
     getCenterPositionsForAreaId (_areaId) {
-        return this.areas[_areaId].centerPositions;
-    }
-
-    increaseNumOfAlliedShipsInArea (_shipId, _areaId) {
-        this.alliedShipsAtAreasMap[_shipId] = _areaId;
-        this.areas[_areaId].numOfAlliedShipsSentToHarvest++;
+        return this.gameArea.getCenterPositionsForAreaId (_areaId);
     }
 
     decreaseNumOfAlliedShipsInArea (_shipId) {
-        const _areaId = this.alliedShipsAtAreasMap[_shipId];
-
-        if (_areaId) {
-            this.alliedShipsAtAreasMap[_shipId] = null;
-            this.areas[_areaId].numOfAlliedShipsSentToHarvest--;
-        }
+        this.gameArea.decreaseNumOfAlliedShipsInArea(_shipId);
     }
 
     _calculateRecommendationValueForArea (_areaId, _normalizedWeightedDistance) {
+        const _areaData = this.gameArea.getAreaData(_areaId);
+
         const _totalHarvestable = 
-            this.areas[_areaId].halite - 
-            this.areas[_areaId].numOfEnemyShips * 500 -
-            this.areas[_areaId].numOfAlliedShipsSentToHarvest * 800;
+            _areaData.halite - 
+            _areaData.numOfEnemyShips * 500 -
+            _areaData.numOfAlliedShipsSentToHarvest * 800;
        
         return parseInt(_totalHarvestable * _normalizedWeightedDistance, 10);
     }
@@ -273,16 +115,13 @@ class GlobalAI {
     }
 
     getAreaRecommendationForShip (_ship) {
-        const _normalizedDistances = 
-            _ship.getPosition().equals(this.player.getShipyard().getPosition()) ? 
-            this.cache.normalizedDistancesFromShipyard :
-            this._calculateNormalizedWeightedDistancesToAreas(_ship.getPosition());
+        const _normalizedWeightedDistances = this.gameArea.calculateNormalizedWeightedDistancesToAreas(_ship.getPosition());
 
-        let _highestRecommendationValue = this._calculateRecommendationValueForArea(0, _normalizedDistances[0]);
+        let _highestRecommendationValue = this._calculateRecommendationValueForArea(0, _normalizedWeightedDistances[0]);
         let _recommendedAreaId = 0;
 
-        for (let _i = 1, _iMax = this.numOfAreas; _i < _iMax; _i++) {
-            const _recommendationValue = this._calculateRecommendationValueForArea(_i, _normalizedDistances[_i]);
+        for (let _i = 1, _iMax = this.gameArea.getNumOfAreas(); _i < _iMax; _i++) {
+            const _recommendationValue = this._calculateRecommendationValueForArea(_i, _normalizedWeightedDistances[_i]);
 
             if (_recommendationValue > _highestRecommendationValue) {
                 _highestRecommendationValue = _recommendationValue;
@@ -290,13 +129,13 @@ class GlobalAI {
             }
         }
 
-        this.increaseNumOfAlliedShipsInArea(_ship.getId(), _recommendedAreaId);
+        this.gameArea.increaseNumOfAlliedShipsInArea(_ship.getId(), _recommendedAreaId);
 
         return _recommendedAreaId;
     }
     
     getHaliteAmountPerCellInArea (_areaId) {
-        return this.areas[_areaId].halite / (AREA_SIZE * AREA_SIZE);
+        return this.gameArea.getHaliteAmountPerCellInArea(_areaId);
     }
 
     checkIfShipsAreCalledHome (_position) {
@@ -320,7 +159,7 @@ class GlobalAI {
     }
 
     _calculateDropoffLocation (_position, _minDistance, _maxDistance) {
-        const _distances = this._calculateDistancesToAreas(_position);
+        const _distances = this.gameArea.calculateDistancesToAreas(_position);
 
         const _choices = [];
 
@@ -331,18 +170,18 @@ class GlobalAI {
 
             _choices.push({
                 areaId: _areaId,
-                halite: this._calculateHaliteForAreaAndItsSurroundings(_areaId),
+                halite: this.gameArea.calculateSumsForAreaAndItsSurroundings(_areaId).halite,
                 distance: _distance,
-                position: this.areas[_areaId].centerPositions[0]
+                position: this.gameArea.getCenterPositionsForAreaId(_areaId)[0]
             });
         });
 
-        const _originAreaId = this.getAreaIdForPosition(_position);
+        const _originAreaId = this.gameArea.getAreaIdForPosition(_position);
 
         return {
             origin: {
                 areaId: _originAreaId,
-                halite: this._calculateHaliteForAreaAndItsSurroundings(_originAreaId)
+                halite: this.gameArea.calculateSumsForAreaAndItsSurroundings(_originAreaId).halite
             },
             possibleAreas: _choices.sort(commonTransformations.reverseSortByProperty('halite'))
         };
@@ -355,7 +194,7 @@ class GlobalAI {
             return null;
         }
 
-        if (!this.bCreateDropoff && this.player.getShips().length === 20 && this.player.getDropoffs().length === 0) {
+        if (!this.bCreateDropoff && this.player.getShips().length === 12 && this.player.getDropoffs().length === 0) {
             this.bCreateDropoff = true;
 
             return null;
@@ -375,7 +214,7 @@ class GlobalAI {
             this.bCreateDropoff === false &&
             this.justCreatedDropoff === false &&
             this.turnNumber < 0.6 * constants.MAX_TURNS && 
-            0.6 < this._calculateRemainingHalite() / this.totalHaliteAtBeginningOfGame &&
+            0.6 < this.gameArea.calculateRemainingHalite() / this.gameArea.getTotalHaliteAtBeginningOfGame() &&
             this.player.getHaliteAmount() >= constants.SHIP_COST &&
             !this.gameMap.getMapCellByPosition(this.player.getShipyard().getPosition()).isOccupied
         ) {

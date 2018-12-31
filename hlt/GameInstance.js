@@ -3,9 +3,9 @@ const readline = require('readline');
 const constants = require('./settings/constants');
 const logging = require('./utils/logging');
 const GameMap = require('./map/GameMap');
+const GameArea = require('./map/GameArea');
 const Player = require('./Player');
-const GlobalAI = require('./ai/GlobalAI');
-let _original = null;
+
 class GameInstance {
     constructor() {
         this.turnNumber = 0;
@@ -13,6 +13,7 @@ class GameInstance {
         this.players = null;
         this.me = null;
         this.gameMap = null;
+        this.gameArea = null;
 
         // Setup input/output
         const rl = readline.createInterface({
@@ -66,7 +67,7 @@ class GameInstance {
         for (let i = 0; i < _numOfPlayers; i++) {
             const [ _playerId, _shipyardX, _shipyardY ] = await this._readAndParseLine();
 
-            const _player = new Player(_playerId).setShipyard(_shipyardX, _shipyardY).initAI();
+            const _player = new Player(_playerId).setShipyard(_shipyardX, _shipyardY);
 
             this.players.set(i, _player);
         }
@@ -84,8 +85,13 @@ class GameInstance {
         }
 
         this.gameMap = new GameMap(_gameMap, _mapWidth, _mapHeight);
+        this.gameArea = new GameArea(this.gameMap);
 
-        this.me.getAI().setGameMap(this.gameMap).setTurnNumber(this.turnNumber).init();
+        this.me.initAI().getAI()
+            .setGameMap(this.gameMap)
+            .setGameArea(this.gameArea)
+            .setTurnNumber(this.turnNumber)
+            .init();
     }
 
     /** Indicate that your bot is ready to play. */
@@ -107,7 +113,7 @@ class GameInstance {
             await this.players.get(_playerId)._update(numShips, numDropoffs, halite, this._readAndParseLine, _bIsMe);
         }
 
-        this.me.getAI().resetEnemyShipDistribution();
+        this.gameArea.resetEnemyShipDistribution();
         this.gameMap.resetShipsOnMap();
 
         const _numChangedCells = parseInt(await this._getLine(), 10);
@@ -115,7 +121,7 @@ class GameInstance {
         for (let i = 0; i < _numChangedCells; i++) {
             const [ _cellX, _cellY, _cellEnergy ] = await this._readAndParseLine();
 
-            this.me.getAI().updateHaliteForAreaBeforeMapCellUpdate(_cellX, _cellY, _cellEnergy);
+            this.gameArea.updateHaliteForAreaBeforeMapCellUpdate(_cellX, _cellY, _cellEnergy);
             this.gameMap.updateTileHaliteAmount(_cellX, _cellY, _cellEnergy);
         }
 
@@ -124,7 +130,7 @@ class GameInstance {
         for (const player of this.players.values()) {
             if (player.id !== this.myId) {
                 for (const ship of player.getShips()) {
-                    this.me.getAI().increaseEnemyNumberOfShipsInArea(ship.position);
+                    this.gameArea.increaseEnemyNumberOfShipsInArea(ship.position);
                 }
             }
 
