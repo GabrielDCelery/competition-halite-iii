@@ -3,7 +3,6 @@
 const Ship = require('../entities/Ship');
 const Direction = require('./helpers/Direction');
 const Position = require('./helpers/Position');
-const TableWrapper = require('../../utils/TableWrapper');
 const MapCell = require('./MapCell');
 
 /**
@@ -206,10 +205,6 @@ class GameMap {
         return new MapCell(new Position(_x, _y), _haliteAmount);
     }
 
-    static create2DMatrix (_mapWidth, _mapHeight) {
-        return TableWrapper.generateEmptyTable (_mapHeight, _mapWidth);
-    }
-
     static sortByProperty (_property) {
         return function compare(a,b) {
             if (a[_property] < b[_property]) {
@@ -236,6 +231,16 @@ class GameMap {
 
             return 0;
         }
+    }
+
+    static generateEmptyTable (_numOfRows, _numOfColumns, _fillValue = null) {
+        const _table = new Array(_numOfRows);
+
+        for (let _i = 0, _iMax = _numOfRows; _i < _iMax; _i++) {
+            _table[_i] = new Array(_numOfColumns).fill(_fillValue);
+        }
+
+        return _table;
     }
 }
 

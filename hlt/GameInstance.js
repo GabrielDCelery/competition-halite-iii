@@ -74,7 +74,7 @@ class GameInstance {
         this.me = this.players.get(this.myId);
 
         const [ _mapWidth, _mapHeight ] = await this._readAndParseLine();
-        const _gameMap = GameMap.create2DMatrix(_mapWidth, _mapHeight);
+        const _gameMap = GameMap.generateEmptyTable(_mapWidth, _mapHeight);
 
         for (let _y = 0; _y < _mapHeight; _y++) {
             const _cells = await this._readAndParseLine();

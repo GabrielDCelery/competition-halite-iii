@@ -51,19 +51,20 @@ class GlobalAI {
             return this.player.getShipyard().getPosition();
         }
 
-        const _possibleDropoffs = [{
-            position: this.player.getShipyard().getPosition(),
-            distance: this.gameMap.calculateManhattanDistance(_ship.getPosition(), this.player.getShipyard().getPosition())
-        }];
+        let _position = this.player.getShipyard().getPosition();
+        let _distance = this.gameMap.calculateManhattanDistance(_ship.getPosition(), this.player.getShipyard().getPosition());
 
         _dropoffs.forEach(_dropoff => {
-            _possibleDropoffs.push({
-                position: _dropoff.getPosition(),
-                distance: this.gameMap.calculateManhattanDistance(_ship.getPosition(), _dropoff.getPosition())
-            });
+            const _dropoffDistance = this.gameMap.calculateManhattanDistance(_ship.getPosition(), _dropoff.getPosition());
+
+            if (_dropoffDistance <= _distance) {
+                _distance = _dropoffDistance;
+                _position = _dropoff.getPosition()
+            }
+
         });
 
-        return _possibleDropoffs.sort(commonTransformations.sortByProperty('distance'))[0].position;
+        return _position;
     }
 
     init () {
