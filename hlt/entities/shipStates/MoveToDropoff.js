@@ -53,12 +53,9 @@ class MoveToDropoff extends _ShipStateInterface {
     }
 
     createCommandForTurn () {
-        const _haliteOnTile = this.gameMap.getMapCellByPosition(this.ship.getPosition()).getHaliteAmount();
-        const _haliteInShipCargo = this.ship.getHaliteInCargo();
-
         if (
             !this.ship.getAI().canMove() || 
-            _haliteInShipCargo < 950 && _haliteInShipCargo * 0.3 < _haliteOnTile
+            this.ship.getAI().shouldIStayOnTileWhileMovingToDropoff()
         ) {
             return this.ship.stayStill();
         }

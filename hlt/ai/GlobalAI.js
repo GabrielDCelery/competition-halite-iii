@@ -55,6 +55,10 @@ class GlobalAI {
         return this;
     }
 
+    getTurnNumber () {
+        return this.turnNumber;
+    }
+
     setTurnNumber (_turnNumber) {
         this.turnNumber = _turnNumber;
 

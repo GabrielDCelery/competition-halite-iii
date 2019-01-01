@@ -44,6 +44,20 @@ class LocalAI {
 
         return _averageHaliteAmountOnTiles * 0.5 <= _haliteOnTile || constants.MAX_HALITE / 10 < _haliteOnTile;
     }
+
+    shouldIStayOnTileWhileCollectingHalite () {
+        const _haliteOnTile = this.playerAI.getGameMap().getMapCellByPosition(this.ship.getPosition()).getHaliteAmount();
+        const _averageHaliteAmountOnTiles = this.ship.getAI().getAverageHaliteAmountOnTileInMyArea();
+
+        return _averageHaliteAmountOnTiles * 0.5 <= _haliteOnTile /*|| constants.MAX_HALITE / 10 < _haliteOnTile*/;
+    }
+
+    shouldIStayOnTileWhileMovingToDropoff () {
+        const _haliteOnTile = this.playerAI.getGameMap().getMapCellByPosition(this.ship.getPosition()).getHaliteAmount();
+        const _haliteInShipCargo = this.ship.getHaliteInCargo();
+
+        return _haliteInShipCargo < 950 && _haliteInShipCargo * 0.3 < _haliteOnTile;
+    }
 }
 
 module.exports = LocalAI;

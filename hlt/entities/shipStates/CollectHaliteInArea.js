@@ -11,7 +11,6 @@ class CollectHalite extends _ShipStateInterface {
             x: null,
             y: null
         };
-        this.averageHaliteAmountOnTile = this.ship.getAI().getAverageHaliteAmountOnTileInMyArea() * 0.5;
 
         this.numOfTurnsSpentAtWanderingInArea = 0;
     }
@@ -33,12 +32,10 @@ class CollectHalite extends _ShipStateInterface {
     createCommandForTurn () {
         const _shipAI = this.ship.getAI();
         const _shipPosition = this.ship.getPosition();
-        const _haliteOnTile = this.gameMap.getMapCellByPosition(_shipPosition).getHaliteAmount();
-        const _worthToStayOnTile = this.averageHaliteAmountOnTile <= _haliteOnTile || constants.MAX_HALITE / 10 < _haliteOnTile;
 
         if (
             !_shipAI.canMove() || 
-            !_shipAI.amIOnADropoff() && _worthToStayOnTile
+            !_shipAI.amIOnADropoff() && _shipAI.shouldIStayOnTileWhileCollectingHalite()
         ) {
             return this.ship.stayStill();
         }
