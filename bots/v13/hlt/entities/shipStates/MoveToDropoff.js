@@ -3,12 +3,12 @@
 const constants = require('../../settings/constants');
 const _ShipStateInterface = require('./_ShipStateInterface');
 
-class MoveToLocationAndConvertToDropoff extends _ShipStateInterface {
-    constructor (_validStates, _ship, _config) {
+class MoveToDropoff extends _ShipStateInterface {
+    constructor (_validStates, _ship) {
         super(_validStates, _ship);
-        this.destination = _config;
-        this.lastSwappedWithShip = null;
         this.requestSwap = this.requestSwap.bind(this);
+        this.destination = this.playerAI.getClosestDropoff(this.ship);
+        this.lastSwappedWithShip = null;
     }
 
     requestSwap (_ship) {
@@ -36,25 +36,33 @@ class MoveToLocationAndConvertToDropoff extends _ShipStateInterface {
 
             return true;
         }
-
+        
         return false;
     }
 
     checkIfNeedsToTransitionToNewState () {
+        if (this.playerAI.checkIfShipsAreCalledHome(this.ship.getPosition())) {
+            return this.validStates.SuicideRushHome;
+        }
+
+        if (this.ship.getHaliteInCargo() === 0) {
+            return this.validStates.MoveToArea;
+        }
+
         return null;
     }
 
     createCommandForTurn () {
-        const _shipAI = this.ship.getAI();
+        const _haliteOnTile = this.gameMap.getMapCellByPosition(this.ship.getPosition()).getHaliteAmount();
+        const _haliteInShipCargo = this.ship.getHaliteInCargo();
 
-        if (!_shipAI.canMove()) {
+        if (
+            !this.ship.getAI().canMove() || 
+            _haliteInShipCargo < 950 && _haliteInShipCargo * 0.3 < _haliteOnTile
+        ) {
             return this.ship.stayStill();
         }
-
-        if (this.gameMap.calculateManhattanDistance(this.ship.getPosition(), this.destination) <= 2) {
-            return this.ship.makeDropoff();
-        }
-
+    
         const _choices = this.gameMap.getAnalyzedListOfChoicesTowardsDestination(this.ship, this.destination);
 
         for (let _i = 0, _iMax = _choices.length; _i < _iMax; _i++) {
@@ -74,8 +82,15 @@ class MoveToLocationAndConvertToDropoff extends _ShipStateInterface {
 
                 return this.ship.move(_chosen.direction);
             }
+
+            if (_shipOnCell.getOwner() !== this.ship.getOwner() && _chosen.mapCell.getPosition().equals(this.destination)) {
+                this.gameMap.getMapCellByPosition(this.ship.getPosition()).markSafe();
+                _chosen.mapCell.markUnsafe(this.ship);
+
+                return this.ship.move(_chosen.direction);
+            }
         }
     }
 }
 
-module.exports = MoveToLocationAndConvertToDropoff;
+module.exports = MoveToDropoff;

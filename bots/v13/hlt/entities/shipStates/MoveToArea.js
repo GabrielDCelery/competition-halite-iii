@@ -3,12 +3,13 @@
 const constants = require('../../settings/constants');
 const _ShipStateInterface = require('./_ShipStateInterface');
 
-class MoveToLocationAndConvertToDropoff extends _ShipStateInterface {
-    constructor (_validStates, _ship, _config) {
+class MoveToArea extends _ShipStateInterface {
+    constructor (_validStates, _ship) {
         super(_validStates, _ship);
-        this.destination = _config;
-        this.lastSwappedWithShip = null;
         this.requestSwap = this.requestSwap.bind(this);
+        this.targetAreaId = this.ship.getAI().requestHaliteRichAreaFromGlobalAI();
+        this.destination = this._getPositionNotInAlignment(this.ship.getPosition(), this.playerAI.getCenterPositionsForAreaId(this.targetAreaId));
+        this.lastSwappedWithShip = null;
     }
 
     requestSwap (_ship) {
@@ -40,19 +41,40 @@ class MoveToLocationAndConvertToDropoff extends _ShipStateInterface {
         return false;
     }
 
+    _getPositionNotInAlignment (_shipPosition, _targetPositions) {
+        for (let _i = 0, _iMax = _targetPositions.length; _i < _iMax; _i++) {
+            if (_shipPosition.x !== _targetPositions[_i].x && _shipPosition.y !== _targetPositions[_i].y) {
+                return _targetPositions[_i];
+            }
+        }
+
+        return _shipPosition;
+    }
+
     checkIfNeedsToTransitionToNewState () {
+        if (this.playerAI.checkIfShipsAreCalledHome(this.ship.getPosition())) {
+            return this.validStates.SuicideRushHome;
+        }
+
+        if (this.ship.getAI().isCargoFullEnoughForDropoff()) {
+            return this.validStates.MoveToDropoff;
+        }
+
+        if (this.playerAI.getAreaIdForPosition(this.ship.getPosition()) === this.targetAreaId) {
+            return this.validStates.CollectHaliteInArea;
+        }
+
         return null;
     }
 
     createCommandForTurn () {
         const _shipAI = this.ship.getAI();
 
-        if (!_shipAI.canMove()) {
+        if (
+            !_shipAI.canMove() || 
+            !_shipAI.amIOnADropoff() && _shipAI.shouldIStayOnTileInsteadOfMovingTowardsArea()
+        ) {
             return this.ship.stayStill();
-        }
-
-        if (this.gameMap.calculateManhattanDistance(this.ship.getPosition(), this.destination) <= 2) {
-            return this.ship.makeDropoff();
         }
 
         const _choices = this.gameMap.getAnalyzedListOfChoicesTowardsDestination(this.ship, this.destination);
@@ -78,4 +100,4 @@ class MoveToLocationAndConvertToDropoff extends _ShipStateInterface {
     }
 }
 
-module.exports = MoveToLocationAndConvertToDropoff;
+module.exports = MoveToArea;
