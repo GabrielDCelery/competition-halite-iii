@@ -3,18 +3,11 @@
 const constants = require('../../settings/constants');
 const _ShipStateInterface = require('./_ShipStateInterface');
 
-class MoveToArea extends _ShipStateInterface {
-    constructor (_validStates, _ship, _config) {
+class MoveToDropoff extends _ShipStateInterface {
+    constructor (_validStates, _ship) {
         super(_validStates, _ship);
         this.requestSwap = this.requestSwap.bind(this);
-
-        if (_config) {
-            this.targetAreaId = _config.areaId;
-        } else {
-            this.targetAreaId = this.ship.getAI().requestHaliteRichAreaFromGlobalAI();
-        }
-
-        this.destination = this._getPositionNotInAlignment(this.ship.getPosition(), this.playerAI.getCenterPositionsForAreaId(this.targetAreaId));
+        this.destination = this.playerAI.getClosestDropoff(this.ship);
         this.lastSwappedWithShip = null;
     }
 
@@ -43,18 +36,8 @@ class MoveToArea extends _ShipStateInterface {
 
             return true;
         }
-
+        
         return false;
-    }
-
-    _getPositionNotInAlignment (_shipPosition, _targetPositions) {
-        for (let _i = 0, _iMax = _targetPositions.length; _i < _iMax; _i++) {
-            if (_shipPosition.x !== _targetPositions[_i].x && _shipPosition.y !== _targetPositions[_i].y) {
-                return _targetPositions[_i];
-            }
-        }
-
-        return _shipPosition;
     }
 
     checkIfNeedsToTransitionToNewState () {
@@ -62,27 +45,21 @@ class MoveToArea extends _ShipStateInterface {
             return this.validStates.SuicideRushHome;
         }
 
-        if (this.ship.getAI().isCargoFullEnoughForDropoff()) {
-            return this.validStates.MoveToDropoff;
-        }
-
-        if (this.playerAI.getAreaIdForPosition(this.ship.getPosition()) === this.targetAreaId) {
-            return this.validStates.CollectHaliteInArea;
+        if (this.ship.getHaliteInCargo() === 0) {
+            return this.validStates.MoveToArea;
         }
 
         return null;
     }
 
     createCommandForTurn () {
-        const _shipAI = this.ship.getAI();
-
         if (
-            !_shipAI.canMove() || 
-            !_shipAI.amIOnADropoff() && _shipAI.shouldIStayOnTileInsteadOfMovingTowardsArea()
+            !this.ship.getAI().canMove() || 
+            this.ship.getAI().shouldIStayOnTileWhileMovingToDropoff()
         ) {
             return this.ship.stayStill();
         }
-
+    
         const _choices = this.gameMap.getAnalyzedListOfChoicesTowardsDestination(this.ship, this.destination);
 
         for (let _i = 0, _iMax = _choices.length; _i < _iMax; _i++) {
@@ -102,8 +79,15 @@ class MoveToArea extends _ShipStateInterface {
 
                 return this.ship.move(_chosen.direction);
             }
+
+            if (_shipOnCell.getOwner() !== this.ship.getOwner() && _chosen.mapCell.getPosition().equals(this.destination)) {
+                this.gameMap.getMapCellByPosition(this.ship.getPosition()).markSafe();
+                _chosen.mapCell.markUnsafe(this.ship);
+
+                return this.ship.move(_chosen.direction);
+            }
         }
     }
 }
 
-module.exports = MoveToArea;
+module.exports = MoveToDropoff;
