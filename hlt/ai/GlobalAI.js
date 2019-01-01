@@ -155,26 +155,6 @@ class GlobalAI {
         return this.gameArea.getHaliteAmountPerCellInArea(_areaId);
     }
 
-    checkIfShipsAreCalledHome (_position) {
-        if (this.shipsAreCalledHome) {
-            return true;
-        }
-
-        const _turnsRemaining = constants.MAX_TURNS - this.turnNumber;
-
-        if (this.maxTurnsToGetHome < _turnsRemaining) {
-            return false;
-        }
-
-        if (_turnsRemaining < this.gameMap.calculateManhattanDistance(this.player.getShipyard().getPosition(), _position) * TURNS_TO_GET_HOME_WEIGHT) {
-            this.shipsAreCalledHome = true;
-            
-            return true;
-        }
-
-        return false;
-    }
-
     _calculateDropoffLocation (_position, _minDistance, _maxDistance) {
         const _distances = this.gameArea.calculateDistancesToAreas(_position);
 

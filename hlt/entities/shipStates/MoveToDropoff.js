@@ -41,7 +41,7 @@ class MoveToDropoff extends _ShipStateInterface {
     }
 
     checkIfNeedsToTransitionToNewState () {
-        if (this.playerAI.checkIfShipsAreCalledHome(this.ship.getPosition())) {
+        if (this.ship.getAI().shouldIRushHome()) {
             return this.validStates.SuicideRushHome;
         }
 

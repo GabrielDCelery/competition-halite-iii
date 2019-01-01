@@ -1,1 +1,1 @@
-halite.exe --replay-directory replays/ -vvv --width 32 --height 32 "node MyBot.js" "node ./bots/v13/MyBot.js"
+halite.exe --replay-directory replays/ -vvv --width 64 --height 64 "node MyBot.js" "node ./bots/v13/MyBot.js"
