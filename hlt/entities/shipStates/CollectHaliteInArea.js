@@ -36,15 +36,21 @@ class CollectHalite extends _ShipStateInterface {
             return this.ship.stayStill();
         }
 
-        const _mostProfitablePositions = _shipAI.getMostProfitablePositions();
+        const _mostProfitablePosition = _shipAI.getMostProfitablePosition();
 
-        if (_mostProfitablePositions.length === 0) {
-            return this.ship.stayStill()
+        if (_mostProfitablePosition) {
+            const _move = this.gameMap.kamiKazeNavigate(this.ship, _mostProfitablePosition);
+
+            return this.ship.move(_move);
         }
 
-        const _move = this.gameMap.kamiKazeNavigate(this.ship, _mostProfitablePositions[0]);
+        if (_shipAI.isTileDepleted()) {
+            this.ship.setState('MoveToArea', null);
 
-        return this.ship.move(_move);
+            return null;
+        }
+
+        return this.ship.stayStill();
     }
 }
 

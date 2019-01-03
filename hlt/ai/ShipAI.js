@@ -30,8 +30,8 @@ class LocalAI {
         return Math.floor(_haliteOnTile / constants.MOVE_COST_RATIO) <= _haliteInShipCargo;
     }
 
-    isTileEmpty () {
-        return this.playerAI.getGameMap().getMapCellByPosition(this.ship.getPosition()).getHaliteAmount() === 0;
+    isTileDepleted () {
+        return this.playerAI.getGameMap().getMapCellByPosition(this.ship.getPosition()).getHaliteAmount() < 10;
     }
 
     isCargoFullEnoughForDropoff () {
@@ -125,7 +125,7 @@ class LocalAI {
         return false;
     }
 
-    getMostProfitablePositions () {
+    getMostProfitablePosition () {
         const _profitablePositions = [];
         const _shipPosition = this.ship.getPosition();
         const _haliteOnTile = this.playerAI.getGameMap().getMapCellByPosition(_shipPosition).getHaliteAmount();
@@ -168,7 +168,7 @@ class LocalAI {
             }
         });
 
-        return _profitablePositions.sort(commonTransformations.reverseSortByProperty('halitePerTurn'));
+        return _profitablePositions.sort(commonTransformations.reverseSortByProperty('halitePerTurn'))[0];
     }
 }
 
