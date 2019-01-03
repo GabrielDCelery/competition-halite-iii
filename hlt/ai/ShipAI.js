@@ -1,6 +1,7 @@
 'use strict';
 
 const constants = require('../settings/constants');
+const commonTransformations = require('../utils/commonTransformations');
 
 class LocalAI {
     constructor (_ship) {
@@ -27,6 +28,10 @@ class LocalAI {
         const _haliteInShipCargo = this.ship.getHaliteInCargo();
 
         return Math.floor(_haliteOnTile / constants.MOVE_COST_RATIO) <= _haliteInShipCargo;
+    }
+
+    isTileEmpty () {
+        return this.playerAI.getGameMap().getMapCellByPosition(this.ship.getPosition()).getHaliteAmount() === 0;
     }
 
     isCargoFullEnoughForDropoff () {
@@ -89,19 +94,21 @@ class LocalAI {
         return _turnsRemaining - 10 <= _turnsToGetHome;
     }
 
-    doesPositionHaveEnemiesNextToIt (_referencePosition = null) {
+    numOfEnemiesNextToPosition (_referencePosition = null) {
         const _position = _referencePosition || this.ship.getPosition();
         const _positionOptions = _position.getSurroundingCardinals().map(this.playerAI.getGameMap().normalize);
+
+        let _numOfEnemies = 0;
 
         for (let _i = 0, _iMax = _positionOptions.length; _i < _iMax; _i++) {
             const _mapCell = this.playerAI.getGameMap().getMapCellByPosition(_positionOptions[_i]);
 
             if (_mapCell.isOccupiedByEnemy(this.ship)) {
-                return true;
+                _numOfEnemies++;
             }
         }
 
-        return false;
+        return _numOfEnemies;
     }
 
     isPositionInspired (_referencePosition = null) {
@@ -116,6 +123,52 @@ class LocalAI {
         }
 
         return false;
+    }
+
+    getMostProfitablePositions () {
+        const _profitablePositions = [];
+        const _shipPosition = this.ship.getPosition();
+        const _haliteOnTile = this.playerAI.getGameMap().getMapCellByPosition(_shipPosition).getHaliteAmount();
+        const _haliteInCargo = this.ship.getHaliteInCargo();
+
+        const _currentHalitePerTurn = this.playerAI.getCollectionRate(
+            _haliteInCargo, 
+            _haliteOnTile, 
+            this.isPositionInspired(_shipPosition)
+        ).halitePerTurn;
+        //const _numOfEnemiesCurrentlyNextTo = this.numOfEnemiesNextToPosition();
+
+        const _possiblePositions = _shipPosition.getSurroundingCardinals().map(this.playerAI.getGameMap().normalize);
+
+        _possiblePositions.forEach(_possiblePosition => {
+            const _mapCell = this.playerAI.getGameMap().getMapCellByPosition(_possiblePosition);
+
+            if (!_mapCell.isEmpty) {
+                return;
+            }
+
+            const _numOfEnemiesNextToPosition = this.numOfEnemiesNextToPosition(_possiblePosition);
+
+            if (0 < _numOfEnemiesNextToPosition) {
+                return;
+            }
+
+            const _haliteOnTile = _mapCell.getHaliteAmount();
+            
+            const _halitePerTurn = this.playerAI.getCollectionRate(
+                _haliteInCargo, 
+                _haliteOnTile, 
+                this.isPositionInspired(_possiblePosition)
+            ).halitePerTurn;
+
+            const _bIsMoreProfitable = _currentHalitePerTurn < _halitePerTurn * 0.5;
+
+            if (_bIsMoreProfitable) {
+                _profitablePositions.push(_possiblePosition);
+            }
+        });
+
+        return _profitablePositions.sort(commonTransformations.reverseSortByProperty('halitePerTurn'));
     }
 }
 
