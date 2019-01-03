@@ -7,6 +7,7 @@ class MapCell {
         this.haliteAmount = halite;
         this.ship = null;
         this.structure = null;
+        this.isOccupiedByEnemy = this.isOccupiedByEnemy.bind(this);
     }
 
     getPosition () {
@@ -19,6 +20,10 @@ class MapCell {
 
     getShip() {
         return this.ship || null;
+    }
+
+    isOccupiedByEnemy (_ship) {
+        return (this.ship !== null) && this.ship.getOwner() !== _ship.getOwner();
     }
 
     /**

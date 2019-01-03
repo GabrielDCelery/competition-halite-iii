@@ -177,6 +177,134 @@ class GameMap {
         return _choices.sort(GameMap.sortByProperty('halite'));
     }
 
+    getMapCellsAtDistance (_position, _distance) {
+        const _mapCells = [];
+
+        let _y = null;
+        let _x = null;
+
+        for (let _i = 0, _iMax = _distance; _i < _iMax; _i++) {
+            _y = (-1) * _distance + _i;
+            _x = 0 + _i; 
+
+            _mapCells.push(this.getMapCellByPosition(_position.directionalOffset(new Direction(_x, _y))));
+
+            _y = 0 + _i;
+            _x = _distance - _i;
+
+            _mapCells.push(this.getMapCellByPosition(_position.directionalOffset(new Direction(_x, _y))));
+
+            _y = _distance - _i;
+            _x = 0 - _i;
+
+            _mapCells.push(this.getMapCellByPosition(_position.directionalOffset(new Direction(_x, _y))));
+
+            _y = 0 - _i;
+            _x = (-1) * _distance + _i;
+
+            _mapCells.push(this.getMapCellByPosition(_position.directionalOffset(new Direction(_x, _y))));
+        }
+
+        return _mapCells;
+    }
+
+    getNumOfEnemyShipsAtDistance (_ship, _distance, _referencePosition) {
+        const _position = _referencePosition || _ship.getPosition();
+        let _numOfEnemyShips = 0;
+
+        let _y = null;
+        let _x = null;
+
+        for (let _i = 0, _iMax = _distance; _i < _iMax; _i++) {
+            _y = (-1) * _distance + _i;
+            _x = 0 + _i; 
+
+            if (this.getMapCellByPosition(_position.directionalOffset(new Direction(_x, _y))).isOccupiedByEnemy(_ship)) {
+                _numOfEnemyShips = _numOfEnemyShips + 1;
+            }
+
+            _y = 0 + _i;
+            _x = _distance - _i;
+
+            if (this.getMapCellByPosition(_position.directionalOffset(new Direction(_x, _y))).isOccupiedByEnemy(_ship)) {
+                _numOfEnemyShips = _numOfEnemyShips + 1;
+            }
+
+            _y = _distance - _i;
+            _x = 0 - _i;
+
+            if (this.getMapCellByPosition(_position.directionalOffset(new Direction(_x, _y))).isOccupiedByEnemy(_ship)) {
+                _numOfEnemyShips = _numOfEnemyShips + 1;
+            }
+
+            _y = 0 - _i;
+            _x = (-1) * _distance + _i;
+
+            if (this.getMapCellByPosition(_position.directionalOffset(new Direction(_x, _y))).isOccupiedByEnemy(_ship)) {
+                _numOfEnemyShips = _numOfEnemyShips + 1;
+            }
+        }
+
+        return _numOfEnemyShips;
+    }
+
+    getMapCellAnalysisAtDistance (_ship, _distance, _referencePosition) {
+        const _position = _referencePosition || _ship.getPosition();
+
+        const _data = {
+            mapCells: [],
+            totalNumOfEnemies: 0
+        };
+
+        let _y = null;
+        let _x = null;
+        let _mapCell = null;
+
+        for (let _i = 0, _iMax = _distance; _i < _iMax; _i++) {
+            _y = (-1) * _distance + _i;
+            _x = 0 + _i; 
+
+            _mapCell = this.getMapCellByPosition(_position.directionalOffset(new Direction(_x, _y)));
+            _data.mapCells.push(_mapCell);
+
+            if (_mapCell.isOccupiedByEnemy(_ship)) {
+                _data.totalNumOfEnemies++;
+            }
+
+            _y = 0 + _i;
+            _x = _distance - _i;
+
+            _mapCell = this.getMapCellByPosition(_position.directionalOffset(new Direction(_x, _y)));
+            _data.mapCells.push(_mapCell);
+
+            if (_mapCell.isOccupiedByEnemy(_ship)) {
+                _data.totalNumOfEnemies++;
+            }
+
+            _y = _distance - _i;
+            _x = 0 - _i;
+
+            _mapCell = this.getMapCellByPosition(_position.directionalOffset(new Direction(_x, _y)));
+            _data.mapCells.push(_mapCell);
+
+            if (_mapCell.isOccupiedByEnemy(_ship)) {
+                _data.totalNumOfEnemies++;
+            }
+
+            _y = 0 - _i;
+            _x = (-1) * _distance + _i;
+
+            _mapCell = this.getMapCellByPosition(_position.directionalOffset(new Direction(_x, _y)));
+            _data.mapCells.push(_mapCell);
+
+            if (_mapCell.isOccupiedByEnemy(_ship)) {
+                _data.totalNumOfEnemies++;
+            }
+        }
+
+        return _data;
+    }
+
     useChosenMove(_ship, _chosen) {
         this.getMapCellByPosition(_ship.getPosition()).markSafe();
         _chosen.mapCell.markUnsafe(_ship);

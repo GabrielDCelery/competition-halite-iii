@@ -55,22 +55,22 @@ class LocalAI {
     shouldIStayOnTileInsteadOfMovingTowardsArea () {
         const _haliteOnTile = this.playerAI.getGameMap().getMapCellByPosition(this.ship.getPosition()).getHaliteAmount();
         const _averageHaliteAmountOnTiles = this.ship.getAI().getAverageHaliteAmountOnTileInMyArea();
-
+        //return _averageHaliteAmountOnTiles <= _haliteOnTile;
         return _averageHaliteAmountOnTiles * 0.5 <= _haliteOnTile || constants.MAX_HALITE / 10 < _haliteOnTile;
+
     }
 
     shouldIStayOnTileWhileCollectingHalite () {
         const _haliteOnTile = this.playerAI.getGameMap().getMapCellByPosition(this.ship.getPosition()).getHaliteAmount();
         const _averageHaliteAmountOnTiles = this.ship.getAI().getAverageHaliteAmountOnTileInMyArea();
-        //const _modifier = [0.5, 0.5, 0.5][this.getGameState()]
 
-        return _averageHaliteAmountOnTiles * 0.5 <= _haliteOnTile /*|| constants.MAX_HALITE / 10 < _haliteOnTile*/;
+        return _averageHaliteAmountOnTiles * 0.5 <= _haliteOnTile;
     }
 
     shouldIStayOnTileWhileMovingToDropoff () {
         const _haliteOnTile = this.playerAI.getGameMap().getMapCellByPosition(this.ship.getPosition()).getHaliteAmount();
         const _haliteInShipCargo = this.ship.getHaliteInCargo();
-
+    
         return _haliteInShipCargo < 950 && _haliteInShipCargo * 0.3 < _haliteOnTile;
     }
 
@@ -87,6 +87,35 @@ class LocalAI {
         );
 
         return _turnsRemaining - 10 <= _turnsToGetHome;
+    }
+
+    doesPositionHaveEnemiesNextToIt (_referencePosition = null) {
+        const _position = _referencePosition || this.ship.getPosition();
+        const _positionOptions = _position.getSurroundingCardinals().map(this.playerAI.getGameMap().normalize);
+
+        for (let _i = 0, _iMax = _positionOptions.length; _i < _iMax; _i++) {
+            const _mapCell = this.playerAI.getGameMap().getMapCellByPosition(_positionOptions[_i]);
+
+            if (_mapCell.isOccupiedByEnemy(this.ship)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    isPositionInspired (_referencePosition = null) {
+        let _totalNumOfEnemyShips = 0;
+
+        for (let _i = 1, _iMax = 5; _i < _iMax; _i++) {
+            _totalNumOfEnemyShips += this.playerAI.getGameMap().getNumOfEnemyShipsAtDistance(this.ship, _i, _referencePosition);
+
+            if (2 <= _totalNumOfEnemyShips) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 
