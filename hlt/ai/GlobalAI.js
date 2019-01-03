@@ -2,6 +2,7 @@
 
 const constants = require('../settings/constants');
 const commonTransformations = require('../utils/commonTransformations');
+const CollectionRateAnalyzer = require('../preInitCalculations/CollectionRateAnalyzer');
 
 const TURNS_TO_GET_HOME_WEIGHT = 1.2;
 
@@ -25,6 +26,7 @@ class GlobalAI {
         this.setGameMap = this.setGameMap.bind(this);
         this.setGameArea = this.setGameArea.bind(this);
         this.setTurnNumber = this.setTurnNumber.bind(this);
+        this.collectionRateAnalyzer = new CollectionRateAnalyzer().initRoundedCollectionRateMap(5);
     }
 
     init () {
@@ -63,6 +65,10 @@ class GlobalAI {
         this.turnNumber = _turnNumber;
 
         return this;
+    }
+
+    getCollectionRate (_haliteInCargo, _haliteOnTile, _bInspired) {
+        return this.collectionRateAnalyzer.getCollectionRate(_haliteInCargo, _haliteOnTile, _bInspired);
     }
 
     getClosestDropoff (_ship) {
