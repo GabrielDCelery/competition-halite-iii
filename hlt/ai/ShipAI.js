@@ -60,7 +60,7 @@ class LocalAI {
     shouldIStayOnTileInsteadOfMovingTowardsArea () {
         const _haliteOnTile = this.playerAI.getGameMap().getMapCellByPosition(this.ship.getPosition()).getHaliteAmount();
         const _averageHaliteAmountOnTiles = this.ship.getAI().getAverageHaliteAmountOnTileInMyArea();
-        //return _averageHaliteAmountOnTiles <= _haliteOnTile;
+        //return _averageHaliteAmountOnTiles * 0.5 <= _haliteOnTile;
         return _averageHaliteAmountOnTiles * 0.5 <= _haliteOnTile || constants.MAX_HALITE / 10 < _haliteOnTile;
 
     }
@@ -112,17 +112,7 @@ class LocalAI {
     }
 
     isPositionInspired (_referencePosition = null) {
-        let _totalNumOfEnemyShips = 0;
-
-        for (let _i = 1, _iMax = 5; _i < _iMax; _i++) {
-            _totalNumOfEnemyShips += this.playerAI.getGameMap().getNumOfEnemyShipsAtDistance(this.ship, _i, _referencePosition);
-
-            if (2 <= _totalNumOfEnemyShips) {
-                return true;
-            }
-        }
-
-        return false;
+        return this.playerAI.getGameMap().isPositionInspired(this.ship, _referencePosition);
     }
 
     getMostProfitablePosition () {
@@ -136,7 +126,6 @@ class LocalAI {
             _haliteOnTile, 
             this.isPositionInspired(_shipPosition)
         ).halitePerTurn;
-        //const _numOfEnemiesCurrentlyNextTo = this.numOfEnemiesNextToPosition();
 
         const _possiblePositions = _shipPosition.getSurroundingCardinals().map(this.playerAI.getGameMap().normalize);
 

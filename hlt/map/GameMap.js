@@ -248,6 +248,64 @@ class GameMap {
         return _numOfEnemyShips;
     }
 
+    isPositionInspired (_ship, _referencePosition = null) {
+        const _position = _referencePosition || _ship.getPosition();
+
+        let _y = null;
+        let _x = null;
+        let _totalNumberOfShips = 0;
+
+        for (let _distance = 1, _distanceMax = 5; _distance < _distanceMax; _distance++) {
+            for (let _i = 0, _iMax = _distance; _i < _iMax; _i++) {
+                _y = (-1) * _distance + _i;
+                _x = 0 + _i; 
+    
+                if (this.getMapCellByPosition(_position.directionalOffset(new Direction(_x, _y))).isOccupiedByEnemy(_ship)) {
+                    _totalNumberOfShips++;
+                }
+
+                if (2 <= _totalNumberOfShips) {
+                    return true;
+                }
+    
+                _y = 0 + _i;
+                _x = _distance - _i;
+    
+                if (this.getMapCellByPosition(_position.directionalOffset(new Direction(_x, _y))).isOccupiedByEnemy(_ship)) {
+                    _totalNumberOfShips++;
+                }
+
+                if (2 <= _totalNumberOfShips) {
+                    return true;
+                }
+    
+                _y = _distance - _i;
+                _x = 0 - _i;
+    
+                if (this.getMapCellByPosition(_position.directionalOffset(new Direction(_x, _y))).isOccupiedByEnemy(_ship)) {
+                    _totalNumberOfShips++;
+                }
+
+                if (2 <= _totalNumberOfShips) {
+                    return true;
+                }
+    
+                _y = 0 - _i;
+                _x = (-1) * _distance + _i;
+    
+                if (this.getMapCellByPosition(_position.directionalOffset(new Direction(_x, _y))).isOccupiedByEnemy(_ship)) {
+                    _totalNumberOfShips++;
+                }
+
+                if (2 <= _totalNumberOfShips) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     getMapCellAnalysisAtDistance (_ship, _distance, _referencePosition) {
         const _position = _referencePosition || _ship.getPosition();
 
@@ -313,12 +371,23 @@ class GameMap {
     }
 
     kamiKazeNavigate (_ship, _destination) {
+        const _targetDirections = this._getTargetDirection(_ship.getPosition(), _destination);
+
+        const _filtered = _targetDirections.filter(_direction => {
+            return _direction !== null;
+        });
+
+        this.getMapCellByPosition(_destination).markUnsafe(_ship);
+
+        return _filtered[0];
+        /*
         const _directions = this.getUnsafeMoves(_ship.position, _destination);
         const _targetPosition = _ship.getPosition().directionalOffset(_directions[0]);
 
         this.getMapCellByPosition(_targetPosition).markUnsafe(_ship);
-        
+
         return _directions[0];
+        */
     }
 
     resetShipsOnMap () {
