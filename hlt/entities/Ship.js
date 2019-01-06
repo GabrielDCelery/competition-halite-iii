@@ -4,7 +4,8 @@ const commands = require('../settings/commands');
 const constants = require('../settings/constants');
 const GameEntity = require('./GameEntity');
 const ShipStateFactory = require('./ShipStateFactory');
-const ShipAI = require('../ai/ShipAI');
+//const ShipAI = require('../ai/ShipAI');
+const ShipAI = require('../ai/ship/ShipAI');
 
 /** Represents a ship. */
 class Ship extends GameEntity {
@@ -12,6 +13,8 @@ class Ship extends GameEntity {
         super(_owner, _id, _position);
         this.haliteAmount = _haliteAmount;
         this.toggleCommandCreatedForTurn = this.toggleCommandCreatedForTurn.bind(this);
+        this.getState = this.getState.bind(this);
+        this.setState = this.setState.bind(this);
     }
 
     getAI () {
@@ -25,7 +28,7 @@ class Ship extends GameEntity {
     }
 
     initState () {
-        this.state = new ShipStateFactory(this);
+        this.finiteState = new ShipStateFactory(this);
 
         return this;
     }
@@ -36,22 +39,30 @@ class Ship extends GameEntity {
         return this;
     }
 
-    setState (_newStateName, _config) {
-        return this.state.setState(_newStateName, _config);
+    setFiniteState (_newStateName, _config) {
+        return this.finiteState.setState(_newStateName, _config);
+    }
+
+    getState (_stateName) {
+        return this[_stateName];
+    }
+
+    setState (_stateName, _value) {
+        return this[_stateName] = _value;
     }
 
     callMethodOnState (_methodname, _argumentsArray) {
-        return this.state.callMethodOnState(_methodname, _argumentsArray);
+        return this.finiteState.callMethodOnState(_methodname, _argumentsArray);
     }
 
     toggleCommandCreatedForTurn (_boolean) {
-        this.state.toggleCommandCreatedForTurn(_boolean);
+        this.finiteState.toggleCommandCreatedForTurn(_boolean);
 
         return this;
     }
 
     createCommandForTurn() {
-        return this.state.createCommandForTurn();
+        return this.finiteState.createCommandForTurn();
     }
 
     /** Is this ship at max halite capacity? */

@@ -156,7 +156,7 @@ class DropoffBuilder {
         const _dropoffLocation = this._calculateDropoffLocation();
         const _shipId = this._getClosestShipToPosition(_dropoffLocation.position);
 
-        this.player.getShip(_shipId).setState('MoveToLocationAndConvertToDropoff', _dropoffLocation.position);
+        this.player.getShip(_shipId).setFiniteState('MoveToLocationAndConvertToDropoff', _dropoffLocation.position);
         this.dropoffBuildInProgress = true;
     }
 

@@ -67,6 +67,10 @@ class GlobalAI {
         return this;
     }
 
+    pushCommandToQueue (_command) {
+        return this.player.pushCommandToQueue(_command);
+    }
+
     getCollectionRate (_haliteInCargo, _haliteOnTile, _bInspired) {
         return this.collectionRateAnalyzer.getCollectionRate(_haliteInCargo, _haliteOnTile, _bInspired);
     }
@@ -100,6 +104,12 @@ class GlobalAI {
 
     getCenterPositionsForAreaId (_areaId) {
         return this.gameArea.getCenterPositionsForAreaId (_areaId);
+    }
+
+    getRandomPositionForAreaId (_areaId) {
+        const _positions = this.gameArea.getCenterPositionsForAreaId (_areaId);
+
+        return _positions[Math.floor(Math.random() * _positions.length)];
     }
 
     decreaseNumOfAlliedShipsInArea (_shipId) {
@@ -185,7 +195,7 @@ class GlobalAI {
             this.gameArea.decreaseNumOfAlliedShipsInArea(_chosenShip.id);
             this.gameArea.increaseNumOfAlliedShipsInArea(_chosenShip.id, _areaToGoTo);
 
-            this.player.getShip(_chosenShip.id).setState('MoveToArea', { areaId: _areaToGoTo });
+            this.player.getShip(_chosenShip.id).setFiniteState('MoveToArea', { areaId: _areaToGoTo });
         });
     }
 
@@ -219,6 +229,10 @@ class GlobalAI {
     }
 
     createCommandForTurn (_turnNumber) {
+        if (this.turnNumber === 1) {
+            return this.player.getShipyard().spawn()
+        }
+        /*
         if(this.subAI.dropoffBuilder.didFinishBuildingDropoff()) {
             this.sendBatchOfShipsToLatestDropoff();
         }
@@ -239,6 +253,7 @@ class GlobalAI {
         ) {
             return this.player.getShipyard().spawn();
         }
+        */
     }
 }
 

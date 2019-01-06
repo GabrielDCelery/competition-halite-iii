@@ -18,11 +18,7 @@ gameInstance.initialize().then(async () => {
         me.resetCommandQueue();
 
         for (const ship of me.getShips()) {
-            const _command = ship.createCommandForTurn();
-
-            if (_command) {
-                me.pushCommandToQueue(_command)
-            }
+            ship.getAI().createCommandForTurn();
         }
 
         const _playerCommand = me.getAI().createCommandForTurn();

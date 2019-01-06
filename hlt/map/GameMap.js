@@ -159,6 +159,14 @@ class GameMap {
         return Direction.Still;
     }
 
+    getMapCellsTowardsPosition (_sourcePosition, _destinationPosition) {
+        return this.getUnsafeMoves(_sourcePosition, _destinationPosition).map(_direction => {
+            const _targetPosition = _sourcePosition.directionalOffset(_direction);
+            
+            return this.getMapCellByPosition(_targetPosition);
+        });
+    }
+
     getAnalyzedListOfChoicesTowardsDestination (_ship, _destination) {
         const _shipPosition = _ship.getPosition();
 

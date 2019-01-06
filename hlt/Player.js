@@ -135,15 +135,11 @@ class Player {
                         getShipyard: this.getShipyard,
                         getAI: this.getAI,
                         pushCommandToQueue: this.pushCommandToQueue
-                    }).initAI().initState();
+                    }).initAI();
                 }
             }
 
             ship.setPosition(new Position(xPos, yPos)).setHaliteAmountInCargo(halite);
-
-            if (_bIsMe) {
-                ship.toggleCommandCreatedForTurn(false);
-            }
 
             _newShipMap.set(shipId, ship);
         }
