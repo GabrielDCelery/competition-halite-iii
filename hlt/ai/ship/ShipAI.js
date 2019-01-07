@@ -16,11 +16,24 @@ const IsNextMoveBlocked = require('./leaf/test/IsNextMoveBlocked');
 const DoNextMove = require('./leaf/action/DoNextMove');
 const DoNextMoveIfTileEmpty = require('./subTree/DoNextMoveIfTileEmpty');
 const AmIAtMyDestination = require('./leaf/test/AmIAtMyDestination');
+const IsCargoFullEnough = require('./leaf/test/IsCargoFullEnough');
+const IsAssignedToUnloadCargo = require('./leaf/test/IsAssignedToUnloadCargo');
+const UnloadCargoAtClosestDropoff = require('./leaf/action/UnloadCargoAtClosestDropoff');
+const MoveToAssignedDestination = require('./macro/MoveToAssignedDestination');
 
 class ShipAI {
     constructor (_ship) {
         this.ship = _ship;
+
+        const moveToAssignedDestination = new MoveToAssignedDestination(this.ship);
+
         this.behaviour = new Selector([
+            new Sequencer([
+                new Selector([
+                    new IsAssignedToUnloadCargo(this.ship)
+                ]),
+                moveToAssignedDestination
+            ]),
             new Sequencer([
                 new Selector([
                     new AmIAssignedToAnArea(this.ship),
@@ -28,16 +41,7 @@ class ShipAI {
                     new GetDesignatedArea(this.ship)
                 ]),
                 new Selector([
-                    new StayStillIfDoesNotHaveEnoughHaliteToMove(this.ship),
-                    new Sequencer([
-                        new GetNextMoveStackTowardsDestination(this.ship),
-                        new RepeatorUntilFail(new Sequencer([
-                            new GetNextMove(this.ship),
-                            new Inverter(new Sequencer([
-                                new DoNextMoveIfTileEmpty(this.ship)
-                            ]))
-                        ]))
-                    ])
+                    moveToAssignedDestination
                 ])
             ])
         ])
