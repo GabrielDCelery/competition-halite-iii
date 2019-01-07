@@ -20,6 +20,7 @@ const IsCargoFullEnough = require('./leaf/test/IsCargoFullEnough');
 const IsAssignedToUnloadCargo = require('./leaf/test/IsAssignedToUnloadCargo');
 const UnloadCargoAtClosestDropoff = require('./leaf/action/UnloadCargoAtClosestDropoff');
 const MoveToAssignedDestination = require('./macro/MoveToAssignedDestination');
+const UnloadCargoAtClosestDropoff = require('./leaf/action/UnloadCargoAtClosestDropoff');
 
 class ShipAI {
     constructor (_ship) {
@@ -30,7 +31,11 @@ class ShipAI {
         this.behaviour = new Selector([
             new Sequencer([
                 new Selector([
-                    new IsAssignedToUnloadCargo(this.ship)
+                    new IsAssignedToUnloadCargo(this.ship),
+                    new Sequencer([
+                        new IsCargoFullEnough(this.ship),
+                        new UnloadCargoAtClosestDropoff(this.ship)
+                    ])
                 ]),
                 moveToAssignedDestination
             ]),
