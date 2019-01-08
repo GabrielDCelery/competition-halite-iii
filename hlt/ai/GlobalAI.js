@@ -75,7 +75,7 @@ class GlobalAI {
         return this.collectionRateAnalyzer.getCollectionRate(_haliteInCargo, _haliteOnTile, _bInspired);
     }
 
-    getClosestDropoff (_ship) {
+    getClosestDropoffPosition (_ship) {
         const _dropoffs = this.player.getDropoffs();
 
         if (_dropoffs.length === 0) {

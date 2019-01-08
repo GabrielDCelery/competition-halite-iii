@@ -8,9 +8,8 @@ class GetClosestDropoff extends Leaf {
     }
 
     process () {
-        const _dropoff = this.playerAI.getClosestDropoff(this.ship);
-
-        this.ship.setState('destination', _dropoff.getPosition());
+        this.ship.setState('designatedDropoff', true);
+        this.ship.setState('destination', this.playerAI.getClosestDropoffPosition(this.ship));
     
         return this.SUCCESS;
     }

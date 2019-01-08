@@ -10,8 +10,13 @@ class AmIOnADropoff extends Leaf {
     process () {
         const _haliteOnTile = this.playerAI.getGameMap().getMapCellByPosition(this.ship.getState('position')).getHaliteAmount();
         const _haliteInShipCargo = this.ship.getState('haliteAmount');
+        const _bIAmOnADropoff = _haliteOnTile === 0 && _haliteInShipCargo === 0;
 
-        return (_haliteOnTile === 0 && _haliteInShipCargo === 0) ? this.SUCCESS : this.FAIL;
+        if (_bIAmOnADropoff) {
+            return this.SUCCESS;
+        }
+
+        return this.FAIL;
     }
 }
 

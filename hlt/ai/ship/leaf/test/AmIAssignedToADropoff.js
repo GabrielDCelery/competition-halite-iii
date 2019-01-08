@@ -2,13 +2,13 @@
 
 const Leaf = require('../Leaf');
 
-class AmIAssignedToADestination extends Leaf {
+class AmIAssignedToAnArea extends Leaf {
     init () {
         return this;
     }
 
     process () {
-        if (this.ship.getState('destination')) {
+        if (this.ship.getState('designatedDropoff')) {
             return this.SUCCESS;
         }
 
@@ -16,4 +16,4 @@ class AmIAssignedToADestination extends Leaf {
     }
 }
 
-module.exports = AmIAssignedToADestination;
+module.exports = AmIAssignedToAnArea;
