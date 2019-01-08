@@ -18,9 +18,9 @@ const DoNextMoveIfTileEmpty = require('./subTree/DoNextMoveIfTileEmpty');
 const AmIAtMyDestination = require('./leaf/test/AmIAtMyDestination');
 const IsCargoFullEnough = require('./leaf/test/IsCargoFullEnough');
 const IsAssignedToUnloadCargo = require('./leaf/test/IsAssignedToUnloadCargo');
-const UnloadCargoAtClosestDropoff = require('./leaf/action/UnloadCargoAtClosestDropoff');
 const MoveToAssignedDestination = require('./macro/MoveToAssignedDestination');
 const UnloadCargoAtClosestDropoff = require('./leaf/action/UnloadCargoAtClosestDropoff');
+const AmIAssignedToADestination = require('./leaf/test/AmIAssignedToADestination');
 
 class ShipAI {
     constructor (_ship) {
@@ -32,24 +32,19 @@ class ShipAI {
             new Sequencer([
                 new Selector([
                     new IsAssignedToUnloadCargo(this.ship),
+                    new AmIAssignedToADestination(this.ship),
                     new Sequencer([
                         new IsCargoFullEnough(this.ship),
-                        new UnloadCargoAtClosestDropoff(this.ship)
+                        new UnloadCargoAtClosestDropoff(this.ship),
+                    ]),
+                    new Sequencer([
+                        new AmIOnADropoff(this.ship),
+                        new GetDesignatedArea(this.ship)
                     ])
                 ]),
                 moveToAssignedDestination
-            ]),
-            new Sequencer([
-                new Selector([
-                    new AmIAssignedToAnArea(this.ship),
-                    new Inverter(new AmIOnADropoff(this.ship)),
-                    new GetDesignatedArea(this.ship)
-                ]),
-                new Selector([
-                    moveToAssignedDestination
-                ])
             ])
-        ])
+        ]);
     }
 
     createCommandForTurn () {
