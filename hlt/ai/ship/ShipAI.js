@@ -31,7 +31,6 @@ class ShipAI {
         this.behaviour = new Selector([
             new Sequencer([
                 new Selector([
-                    new IsAssignedToUnloadCargo(this.ship),
                     new AmIAssignedToADestination(this.ship),
                     new Sequencer([
                         new IsCargoFullEnough(this.ship),
