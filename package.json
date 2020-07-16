@@ -7,7 +7,7 @@
     "doc": "docs"
   },
   "dependencies": {
-    "lodash": "^4.17.15"
+    "lodash": "^4.17.19"
   },
   "devDependencies": {
     "jest": "^23.6.0"
